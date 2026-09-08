@@ -338,17 +338,25 @@ def verifica(qml_path, gdb_path):
     return True
 
 
-def demo_html():
-    """Anteprima statica dell'HTML del form (doppio click, niente QGIS)."""
-    from qgis.core import QgsExpression  # noqa (assicura init avvenuta)
-    corpo = HTML_DOSSIER.replace('[% "ATT_NAME" %]', CAMPIONI[0][0])
-    corpo = corpo.replace('[% "CONTENT_TYPE" %]', CAMPIONI[0][1])
-    corpo = corpo.replace('[% "DATA_SIZE" %]', str(len(CAMPIONI[0][2])))
-    expr_img = ("<img src=\"data:" + CAMPIONI[0][1] + ";base64," + PNG_B64
-                + "\" style=\"max-width:100%;border:1px solid #ccc\"/>")
-    import re
-    corpo = re.sub(r"\[% CASE WHEN.*END %\]", expr_img, corpo, flags=re.S)
-    return "<!doctype html><html lang=it><meta charset=utf-8><title>Demo anteprima (variante A/C)</title><body>\n<h2>Come appare il dossier HTML nel form — caso immagine</h2>\n" + corpo + "\n<hr><h2>Caso non-immagine (PDF/TIFF/MP4)</h2>\n<p><i>Nessuna anteprima inline per questo formato. Usa l’azione «Apri allegato».</i></p>\n</body></html>\n"
+def demo_html(gdb):
+    """Anteprima statica (doppio click, niente QGIS): l'HTML del form renderizzato
+    con il VERO motore QGIS per ognuna delle 4 righe di test."""
+    from qgis.core import QgsVectorLayer, QgsExpression, QgsExpressionContext, QgsExpressionContextUtils
+    tab = QgsVectorLayer(gdb + "|layername=fotorilievo_test__ATTACH", "gdb", "ogr")
+    assert tab.isValid()
+    parti = ["<!doctype html><html lang=it><meta charset=utf-8>"
+             "<title>Demo anteprima (variante A/C)</title><body>"
+             "<h1>Cosi deve apparire il riquadro HTML nel form</h1>"
+             "<p>Renderizzato con il motore QGIS reale (stesso del form).</p>"]
+    for feat in tab.getFeatures():
+        ctx = QgsExpressionContext()
+        ctx.appendScopes(QgsExpressionContextUtils.globalProjectLayerScopes(tab))
+        ctx.setFeature(feat)
+        reso = QgsExpression.replaceExpressionText(HTML_DOSSIER, ctx)
+        assert "[%" not in reso, "sostituzione fallita per %s" % feat["ATT_NAME"]
+        parti.append("<hr><h2>%s</h2>\n%s" % (feat["ATT_NAME"], reso))
+    parti.append("</body></html>\n")
+    return "\n".join(parti)
 
 
 def gdb_valido(percorso):
@@ -393,8 +401,8 @@ def main():
         print("variante %s OK: %s (reload + 4 round-trip byte fedeli)" % (key, fnome))
         risultati[key] = fnome
     with open(os.path.join(BASE, "anteprima_demo.html"), "w", encoding="utf-8") as f:
-        f.write(demo_html())
-    print("demo HTML: anteprima_demo.html")
+        f.write(demo_html(gdb))
+    print("demo HTML: anteprima_demo.html (4 casi renderizzati col motore reale)")
     print("== tutto verificato headless ==")
     from qgis.core import QgsApplication
     QgsApplication.exitQgis()
