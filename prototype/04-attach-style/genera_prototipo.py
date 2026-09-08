@@ -178,6 +178,7 @@ def variante_A(lyr):
     tab.setType(Qgis.AttributeEditorContainerType.Tab)
     html = QgsAttributeEditorHtmlElement("DossierFoto", tab)
     html.setHtmlCode(HTML_DOSSIER)
+    html.setVerticalStretch(1)  # il riquadro foto si allarga alle immagini grandi
     tab.addChildElement(html)
     for n in ("ATT_NAME", "CONTENT_TYPE", "DATA_SIZE"):
         tab.addChildElement(QgsAttributeEditorField(n, fidx(n), tab))
@@ -235,6 +236,7 @@ def variante_C(lyr):
     foto.setType(Qgis.AttributeEditorContainerType.Tab)
     html = QgsAttributeEditorHtmlElement("DossierFoto", foto)
     html.setHtmlCode(HTML_DOSSIER)
+    html.setVerticalStretch(1)  # il riquadro foto si allarga alle immagini grandi
     foto.addChildElement(html)
     foto.addChildElement(QgsAttributeEditorField("ATT_NAME", fidx("ATT_NAME"), foto))
     foto.addChildElement(QgsAttributeEditorField("CONTENT_TYPE", fidx("CONTENT_TYPE"), foto))
