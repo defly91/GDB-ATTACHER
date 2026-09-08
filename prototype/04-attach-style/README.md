@@ -64,7 +64,8 @@ solo da ArcGIS Pro (`EnableAttachments`) — il plugin non la creerà mai.
 
 ## Validazione già fatta (headless, QGIS 3.44.4)
 
-- 3/3 QML ricaricati con `loadNamedStyle` OK su layer fresco.
+- 3/3 QML ricaricati con `loadNamedStyle` OK su layer fresco **e applicati alla vera
+  tabella `fotorilievo_test__ATTACH` del GDB** (regressione: niente più "geom. sbagliata").
 - 4/4 blob del GDB: `to_base64` → decode identico agli originali; ramo CASE WHEN
   corretto per tutti (2 img / 2 fallback).
 - Vincoli (C), azione default (tutte), alias IT, colonna DATA nascosta: serializzati.

@@ -98,10 +98,12 @@ def boot_qgis():
 
 
 def memoria_attach(nome="mem__ATTACH"):
-    """Layer memoria con gli stessi 6 campi della tabella allegati (nomi identici)."""
+    """Layer memoria SENZA geometria con gli stessi 6 campi della tabella allegati.
+    Il None e fondamentale: la tabella allegati non ha geometria e QGIS rifiuta
+    QML con layerGeometryType diverso ("geom. sbagliata")."""
     from qgis.core import QgsVectorLayer, QgsField
     from qgis.PyQt.QtCore import QMetaType
-    lyr = QgsVectorLayer("Point?crs=EPSG:32632", nome, "memory")
+    lyr = QgsVectorLayer("None", nome, "memory")
     assert lyr.isValid()
     lyr.dataProvider().addAttributes([
         QgsField("GLOBALID", QMetaType.Type.QString),
@@ -330,6 +332,9 @@ def verifica(qml_path, gdb_path):
         v2 = e2.evaluate(ctx)
         img = feat["CONTENT_TYPE"] in ("image/jpeg", "image/png")
         assert bool(v2) == img, "ramo CASE WHEN errato per %s" % feat["ATT_NAME"]
+    # regressione ticket 04: il QML deve applicarsi alla VERA tabella senza geometria
+    msg2, ok2 = tab.loadNamedStyle(qml_path)
+    assert ok2, "QML rifiutato dalla tabella GDB (geometria?): %s" % msg2
     return True
 
 
@@ -346,11 +351,34 @@ def demo_html():
     return "<!doctype html><html lang=it><meta charset=utf-8><title>Demo anteprima (variante A/C)</title><body>\n<h2>Come appare il dossier HTML nel form — caso immagine</h2>\n" + corpo + "\n<hr><h2>Caso non-immagine (PDF/TIFF/MP4)</h2>\n<p><i>Nessuna anteprima inline per questo formato. Usa l’azione «Apri allegato».</i></p>\n</body></html>\n"
 
 
+def gdb_valido(percorso):
+    """Il GDB di test esiste gia con le 2 tabelle e le 4 righe attese?"""
+    try:
+        from osgeo import gdal, ogr
+        gdal.UseExceptions()
+        ds = ogr.Open(percorso)
+        if ds is None:
+            return False
+        nomi = [ds.GetLayer(i).GetName() for i in range(ds.GetLayerCount())]
+        if "fotorilievo_test__ATTACH" not in nomi:
+            return False
+        at = ds.GetLayerByName("fotorilievo_test__ATTACH")
+        ok = at.GetFeatureCount() == 4
+        ds = None
+        return ok
+    except Exception:
+        return False
+
+
 def main():
     app = boot_qgis()
     print("== ticket 04: genero prototipo stile ==")
     gdb = os.path.join(BASE, "test_attach.gdb")
-    n = crea_gdb_test(gdb)
+    if gdb_valido(gdb):
+        print("GDB di test gia presente e valido: riuso (niente ricreazione)")
+        n = 4
+    else:
+        n = crea_gdb_test(gdb)
     print("GDB di test: %s (%d allegati)" % (gdb, n))
     risultati = {}
     for key, fn, fnome in (("A", variante_A, "variante_A_anteprima.qml"),
