@@ -13,6 +13,7 @@ Spec decisionale pronta per il plugin QGIS GDB-Attacher: wizard che seleziona un
 
 - [Creare _ATTACH senza rompere il GDB](issues/02-creare-attach-senza-rompere-gdb.md): mai creare `__ATTACH` a mano; se manca/incompleta bloccare e rimandare a Pro, scrivere con i 6 campi normalizzati.
 - [TOS e licenze FileGDB per il plugin](issues/01-tos-licenze-filegdb-plugin.md): nessuna violazione con solo GDAL OpenFileGDB, licenza GPLv2+, dipendenze dichiarate, niente binari.
+- [Wizard selezione layer e UX](issues/03-wizard-selezione-layer-ux.md): solo layer in progetto su FileGDB; verifica bloccante → discovery → campi → naming → esegui → stile; blocco duro sui casi anomali; preview a conteggi + esempi naming su 5 feature; backup aggirabile, transazione unica, report con export missing; QML auto-applicato; IT+EN; glossario in `CONTEXT.md`.
 
 ## Not yet specified
 
