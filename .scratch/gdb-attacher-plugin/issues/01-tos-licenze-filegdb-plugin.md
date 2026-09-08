@@ -1,8 +1,14 @@
 Map: [map](../map.md)
 Type: research (AFK)
-Status: open
+Status: resolved
 Blocked by: none
 Labels: wayfinder:research
+
+## Answer (context pointer)
+
+Verdetto: **no violazioni** se: solo driver GDAL OpenFileGDB, licenza plugin
+GPLv2+, dipendenze dichiarate in About, niente binari. Dettagli + fonti:
+[research-tos.md](../research-tos.md). Branch: `research/tos-licenze` (throwaway).
 
 ## Question
 
