@@ -11,7 +11,7 @@ Spec decisionale pronta per il plugin QGIS GDB-Attacher: wizard che seleziona un
 
 ## Decisions so far
 
-<!-- nessuna decisione ancora: mappa appena chartata -->
+- [Creare _ATTACH senza rompere il GDB](issues/02-creare-attach-senza-rompere-gdb.md): mai creare `__ATTACH` a mano; se manca/incompleta bloccare e rimandare a Pro, scrivere con i 6 campi normalizzati.
 
 ## Not yet specified
 
