@@ -40,9 +40,12 @@ GUID e dimensione in sola lettura, colonna blob nascosta in tabella, titolo feat
 
 ## Verdetti tecnici (già chiusi dal prototipo, non da ridiscutere)
 
-1. **Anteprima inline via `data:`-URI funziona**: `to_base64("DATA")` fa round-trip
-   fedele ai byte (verificato su GDB reale: 4/4 blob identici). Il ramo
-   `CASE WHEN "CONTENT_TYPE" IN ('image/jpeg','image/png')` sceglie img vs fallback.
+1. **Anteprima inline via `data:`-URI funziona, ma nel form NON vale `[% %]`**
+   (quella sintassi è di mapTip e layout di stampa). Il riquadro HTML del form è
+   un web view QtWebKit: i valori si leggono da JavaScript con
+   `expression.evaluate('"CAMPO"')` (cfr. `qgshtmlwidgetwrapper.cpp`).
+   `to_base64("DATA")` fa round-trip fedele ai byte (4/4 sul GDB); il ramo
+   img/fallback vive in un `if` JavaScript sul `CONTENT_TYPE`.
 2. **Widget ExternalResource: NON applicabile.** Si aspetta un percorso file, ma
    `ATT_NAME` è solo un nome dentro il GDB (il blob non sta sul filesystem).
    Metterlo mostrerebbe un selettore file rotto. HTML + azioni coprono il requisito

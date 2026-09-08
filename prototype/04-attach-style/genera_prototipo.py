@@ -57,13 +57,30 @@ if _percorso:
     with open(_percorso, 'wb') as _f:
         _f.write(_dati)"""
 
-# Singolo elemento HTML: la condizione immagine/fallback vive DENTRO l'espressione
-# (gli elementi HTML del form non hanno "visibilita condizionale" propria).
+# Elemento HTML del form: ATTENZIONE, qui NON vale la sintassi [% %]
+# (quella e per mapTip e layout di stampa). Il riquadro HTML del form e un
+# QgsWebView (QtWebKit): i valori si leggono da JavaScript con
+# expression.evaluate("...")  (cfr. qgshtmlwidgetwrapper.cpp, release-3_44).
 HTML_DOSSIER = """<div style="font-family:sans-serif;max-width:640px">
-<h3 style="margin:0 0 4px">[% "ATT_NAME" %]</h3>
-<p style="color:#555;margin:0 0 8px">[% "CONTENT_TYPE" %] \u00b7 [% "DATA_SIZE" %] byte</p>
-[% CASE WHEN "CONTENT_TYPE" IN ('image/jpeg', 'image/png') THEN '<img src="data:' || "CONTENT_TYPE" || ';base64,' || to_base64("DATA") || '" style="max-width:100%;border:1px solid #ccc"/>' ELSE '<p><i>Nessuna anteprima inline per questo formato. Usa l''azione Apri allegato.</i></p>' END %]
-</div>"""
+<h3 id="titolofoto" style="margin:0 0 4px"></h3>
+<p id="metafoto" style="color:#555;margin:0 0 8px"></p>
+<div id="anteprimafoto"></div>
+</div>
+<script>
+var _nome = expression.evaluate('"ATT_NAME"');
+var _tipo = expression.evaluate('"CONTENT_TYPE"');
+var _dim = expression.evaluate('"DATA_SIZE"');
+document.getElementById('titolofoto').textContent = _nome;
+document.getElementById('metafoto').textContent = _tipo + ' \\u00b7 ' + _dim + ' byte';
+if (_tipo == 'image/jpeg' || _tipo == 'image/png') {
+  document.getElementById('anteprimafoto').innerHTML = '<img src="data:' + _tipo + ';base64,' + expression.evaluate('to_base64("DATA")') + '" style="max-width:100%;border:1px solid #ccc" />';
+} else {
+  document.getElementById('anteprimafoto').innerHTML = '<p><i>Nessuna anteprima inline per questo formato. Usa l\\u2019azione Apri allegato.</i></p>';
+}
+</script>"""
+
+# Espressioni QGIS usate dal dossier (verificate una a una in verifica())
+JS_EXPRESSIONS = ['"ATT_NAME"', '"CONTENT_TYPE"', '"DATA_SIZE"', 'to_base64("DATA")']
 
 MAPTIP = """<b>[% "ATT_NAME" %]</b> ([% "CONTENT_TYPE" %], [% "DATA_SIZE" %] byte)<br/>[% CASE WHEN "CONTENT_TYPE" IN ('image/jpeg', 'image/png') THEN '<img src="data:' || "CONTENT_TYPE" || ';base64,' || to_base64("DATA") || '" width="300"/>' ELSE '' END %]"""
 
@@ -312,11 +329,22 @@ def crea_gdb_test(percorso):
 
 
 def verifica(qml_path, gdb_path):
-    """Ricarica il QML su un layer fresco + round-trip base64 sul vero GDB."""
+    """Ricarica il QML su un layer fresco + lo applica alla vera tabella GDB +
+    valuta una a una le espressioni usate dal dossier JS."""
+    import re
+    import html as ihtml
     from qgis.core import QgsVectorLayer, QgsExpression, QgsExpressionContext, QgsExpressionContextUtils
     fresco = memoria_attach("verifica")
     msg, ok = fresco.loadNamedStyle(qml_path)
     assert ok, "loadNamedStyle fallito per %s: %s" % (qml_path, msg)
+    txt = open(qml_path, encoding="utf-8").read()
+    m = re.search(r"<attributeEditorHtmlElement[^>]*>(.*?)</attributeEditorHtmlElement>", txt, re.S)
+    if m:
+        code = ihtml.unescape(m.group(1).split("</labelStyle>", 1)[1])
+        assert "[%" not in code, "sintassi [% %] non valutata nel form! usare expression.evaluate"
+        assert "expression.evaluate" in code, "manca il bridge JS expression.evaluate"
+        trovate = re.findall(r"expression\.evaluate\('(.*?)'\)", code)
+        assert sorted(trovate) == sorted(JS_EXPRESSIONS), "espressioni inattese: %s" % trovate
     tab = QgsVectorLayer(gdb_path + "|layername=fotorilievo_test__ATTACH", "gdb", "ogr")
     assert tab.isValid(), "GDB non apribile: %s" % gdb_path
     assert tab.featureCount() == 4, "righe attese 4, trovate %d" % tab.featureCount()
@@ -326,14 +354,16 @@ def verifica(qml_path, gdb_path):
         ctx = QgsExpressionContext()
         ctx.appendScopes(QgsExpressionContextUtils.globalProjectLayerScopes(tab))
         ctx.setFeature(feat)
-        e = QgsExpression('to_base64("DATA")')
-        v = e.evaluate(ctx)
-        assert not e.hasEvalError(), e.evalErrorString()
-        assert _b64.b64decode(str(v)) == attesi[feat["ATT_NAME"]], "byte non fedeli per %s" % feat["ATT_NAME"]
-        e2 = QgsExpression('CASE WHEN "CONTENT_TYPE" IN (\'image/jpeg\', \'image/png\') THEN 1 ELSE 0 END')
-        v2 = e2.evaluate(ctx)
-        img = feat["CONTENT_TYPE"] in ("image/jpeg", "image/png")
-        assert bool(v2) == img, "ramo CASE WHEN errato per %s" % feat["ATT_NAME"]
+        vals = {}
+        for expr_str in JS_EXPRESSIONS:
+            e = QgsExpression(expr_str)
+            v = e.evaluate(ctx)
+            assert not e.hasEvalError(), "%s: %s" % (expr_str, e.evalErrorString())
+            vals[expr_str] = v
+        assert str(vals['"ATT_NAME"']) == feat["ATT_NAME"]
+        assert str(vals['"CONTENT_TYPE"']) == feat["CONTENT_TYPE"]
+        assert _b64.b64decode(str(vals['to_base64("DATA")'])) == attesi[feat["ATT_NAME"]], \
+            "byte non fedeli per %s" % feat["ATT_NAME"]
     # regressione ticket 04: il QML deve applicarsi alla VERA tabella senza geometria
     msg2, ok2 = tab.loadNamedStyle(qml_path)
     assert ok2, "QML rifiutato dalla tabella GDB (geometria?): %s" % msg2
@@ -341,24 +371,21 @@ def verifica(qml_path, gdb_path):
 
 
 def demo_html(gdb):
-    """Anteprima statica (doppio click, niente QGIS): l'HTML del form renderizzato
-    con il VERO motore QGIS per ognuna delle 4 righe di test."""
-    from qgis.core import QgsVectorLayer, QgsExpression, QgsExpressionContext, QgsExpressionContextUtils
-    tab = QgsVectorLayer(gdb + "|layername=fotorilievo_test__ATTACH", "gdb", "ogr")
-    assert tab.isValid()
-    parti = ["<!doctype html><html lang=it><meta charset=utf-8>"
-             "<title>Demo anteprima (variante A/C)</title><body>"
-             "<h1>Cosi deve apparire il riquadro HTML nel form</h1>"
-             "<p>Renderizzato con il motore QGIS reale (stesso del form).</p>"]
-    for feat in tab.getFeatures():
-        ctx = QgsExpressionContext()
-        ctx.appendScopes(QgsExpressionContextUtils.globalProjectLayerScopes(tab))
-        ctx.setFeature(feat)
-        reso = QgsExpression.replaceExpressionText(HTML_DOSSIER, ctx)
-        assert "[%" not in reso, "sostituzione fallita per %s" % feat["ATT_NAME"]
-        parti.append("<hr><h2>%s</h2>\n%s" % (feat["ATT_NAME"], reso))
-    parti.append("</body></html>\n")
-    return "\n".join(parti)
+    """Anteprima statica (doppio click, niente QGIS): i due esiti del dossier —
+    caso immagine (data-URI reale) e caso fallback — come li renderizza il form."""
+    img = ("<img src=\"data:" + CAMPIONI[0][1] + ";base64," + PNG_B64
+           + "\" style=\"max-width:100%;border:1px solid #ccc\" />")
+    return ("<!doctype html><html lang=it><meta charset=utf-8>"
+            "<title>Demo anteprima (variante A/C)</title><body>"
+            "<h1>Cosi deve apparire il riquadro HTML nel form</h1>"
+            "<hr><h2>Caso immagine (JPG/PNG): la foto si vede</h2>\n"
+            "<h3>" + CAMPIONI[0][0] + "</h3><p>" + CAMPIONI[0][1]
+            + " \u00b7 " + str(len(CAMPIONI[0][2])) + " byte</p>\n" + img +
+            "\n<hr><h2>Caso non-immagine (PDF/TIFF/MP4): testo + azione</h2>\n"
+            "<h3>" + CAMPIONI[2][0] + "</h3><p>" + CAMPIONI[2][1]
+            + " \u00b7 " + str(len(CAMPIONI[2][2])) + " byte</p>\n"
+            "<p><i>Nessuna anteprima inline per questo formato. "
+            "Usa l\u2019azione Apri allegato.</i></p>\n</body></html>\n")
 
 
 def gdb_valido(percorso):
@@ -404,7 +431,7 @@ def main():
         risultati[key] = fnome
     with open(os.path.join(BASE, "anteprima_demo.html"), "w", encoding="utf-8") as f:
         f.write(demo_html(gdb))
-    print("demo HTML: anteprima_demo.html (4 casi renderizzati col motore reale)")
+    print("demo HTML: anteprima_demo.html (caso immagine + caso fallback)")
     print("== tutto verificato headless ==")
     from qgis.core import QgsApplication
     QgsApplication.exitQgis()

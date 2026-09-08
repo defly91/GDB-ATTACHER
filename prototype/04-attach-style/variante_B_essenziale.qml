@@ -1,143 +1,143 @@
 <!DOCTYPE qgis PUBLIC 'http://mrcc.com/qgis.dtd' 'SYSTEM'>
-<qgis maxScale="0" minScale="1e+08" autoRefreshTime="0" readOnly="0" autoRefreshMode="Disabled" hasScaleBasedVisibilityFlag="0" version="3.44.4-Solothurn" styleCategories="AllStyleCategories">
+<qgis readOnly="0" minScale="1e+08" version="3.44.4-Solothurn" autoRefreshMode="Disabled" styleCategories="AllStyleCategories" maxScale="0" autoRefreshTime="0" hasScaleBasedVisibilityFlag="0">
   <flags>
     <Identifiable>1</Identifiable>
     <Removable>1</Removable>
     <Searchable>1</Searchable>
     <Private>0</Private>
   </flags>
-  <temporal enabled="0" endField="" fixedDuration="0" mode="0" startExpression="" accumulate="0" durationUnit="min" startField="" endExpression="" durationField="" limitMode="0">
+  <temporal accumulate="0" durationUnit="min" limitMode="0" enabled="0" mode="0" startField="" startExpression="" endExpression="" durationField="" endField="" fixedDuration="0">
     <fixedRange>
       <start></start>
       <end></end>
     </fixedRange>
   </temporal>
-  <elevation binding="Centroid" respectLayerSymbol="1" showMarkerSymbolInSurfacePlots="0" symbology="Line" customToleranceEnabled="1" extrusionEnabled="0" clamping="Terrain" zoffset="0" zscale="1" type="IndividualFeatures" extrusion="0">
+  <elevation binding="Centroid" extrusionEnabled="0" customToleranceEnabled="1" showMarkerSymbolInSurfacePlots="0" extrusion="0" symbology="Line" zoffset="0" respectLayerSymbol="1" clamping="Terrain" zscale="1" type="IndividualFeatures">
     <data-defined-properties>
       <Option type="Map">
-        <Option name="name" value="" type="QString"/>
+        <Option value="" name="name" type="QString"/>
         <Option name="properties"/>
-        <Option name="type" value="collection" type="QString"/>
+        <Option value="collection" name="type" type="QString"/>
       </Option>
     </data-defined-properties>
     <profileLineSymbol>
-      <symbol frame_rate="10" clip_to_extent="1" force_rhr="0" is_animated="0" name="" type="line" alpha="1">
+      <symbol alpha="1" is_animated="0" frame_rate="10" name="" force_rhr="0" type="line" clip_to_extent="1">
         <data_defined_properties>
           <Option type="Map">
-            <Option name="name" value="" type="QString"/>
+            <Option value="" name="name" type="QString"/>
             <Option name="properties"/>
-            <Option name="type" value="collection" type="QString"/>
+            <Option value="collection" name="type" type="QString"/>
           </Option>
         </data_defined_properties>
-        <layer class="SimpleLine" pass="0" enabled="1" locked="0" id="{f8375556-fcf5-4c8c-a738-9a5f91f7f4de}">
+        <layer class="SimpleLine" pass="0" locked="0" id="{00d99757-fa28-48c8-a814-580156d86802}" enabled="1">
           <Option type="Map">
-            <Option name="align_dash_pattern" value="0" type="QString"/>
-            <Option name="capstyle" value="square" type="QString"/>
-            <Option name="customdash" value="5;2" type="QString"/>
-            <Option name="customdash_map_unit_scale" value="3x:0,0,0,0,0,0" type="QString"/>
-            <Option name="customdash_unit" value="MM" type="QString"/>
-            <Option name="dash_pattern_offset" value="0" type="QString"/>
-            <Option name="dash_pattern_offset_map_unit_scale" value="3x:0,0,0,0,0,0" type="QString"/>
-            <Option name="dash_pattern_offset_unit" value="MM" type="QString"/>
-            <Option name="draw_inside_polygon" value="0" type="QString"/>
-            <Option name="joinstyle" value="bevel" type="QString"/>
-            <Option name="line_color" value="232,113,141,255,rgb:0.9098039,0.4431373,0.5529412,1" type="QString"/>
-            <Option name="line_style" value="solid" type="QString"/>
-            <Option name="line_width" value="0.6" type="QString"/>
-            <Option name="line_width_unit" value="MM" type="QString"/>
-            <Option name="offset" value="0" type="QString"/>
-            <Option name="offset_map_unit_scale" value="3x:0,0,0,0,0,0" type="QString"/>
-            <Option name="offset_unit" value="MM" type="QString"/>
-            <Option name="ring_filter" value="0" type="QString"/>
-            <Option name="trim_distance_end" value="0" type="QString"/>
-            <Option name="trim_distance_end_map_unit_scale" value="3x:0,0,0,0,0,0" type="QString"/>
-            <Option name="trim_distance_end_unit" value="MM" type="QString"/>
-            <Option name="trim_distance_start" value="0" type="QString"/>
-            <Option name="trim_distance_start_map_unit_scale" value="3x:0,0,0,0,0,0" type="QString"/>
-            <Option name="trim_distance_start_unit" value="MM" type="QString"/>
-            <Option name="tweak_dash_pattern_on_corners" value="0" type="QString"/>
-            <Option name="use_custom_dash" value="0" type="QString"/>
-            <Option name="width_map_unit_scale" value="3x:0,0,0,0,0,0" type="QString"/>
+            <Option value="0" name="align_dash_pattern" type="QString"/>
+            <Option value="square" name="capstyle" type="QString"/>
+            <Option value="5;2" name="customdash" type="QString"/>
+            <Option value="3x:0,0,0,0,0,0" name="customdash_map_unit_scale" type="QString"/>
+            <Option value="MM" name="customdash_unit" type="QString"/>
+            <Option value="0" name="dash_pattern_offset" type="QString"/>
+            <Option value="3x:0,0,0,0,0,0" name="dash_pattern_offset_map_unit_scale" type="QString"/>
+            <Option value="MM" name="dash_pattern_offset_unit" type="QString"/>
+            <Option value="0" name="draw_inside_polygon" type="QString"/>
+            <Option value="bevel" name="joinstyle" type="QString"/>
+            <Option value="145,82,45,255,rgb:0.5686275,0.3215686,0.1764706,1" name="line_color" type="QString"/>
+            <Option value="solid" name="line_style" type="QString"/>
+            <Option value="0.6" name="line_width" type="QString"/>
+            <Option value="MM" name="line_width_unit" type="QString"/>
+            <Option value="0" name="offset" type="QString"/>
+            <Option value="3x:0,0,0,0,0,0" name="offset_map_unit_scale" type="QString"/>
+            <Option value="MM" name="offset_unit" type="QString"/>
+            <Option value="0" name="ring_filter" type="QString"/>
+            <Option value="0" name="trim_distance_end" type="QString"/>
+            <Option value="3x:0,0,0,0,0,0" name="trim_distance_end_map_unit_scale" type="QString"/>
+            <Option value="MM" name="trim_distance_end_unit" type="QString"/>
+            <Option value="0" name="trim_distance_start" type="QString"/>
+            <Option value="3x:0,0,0,0,0,0" name="trim_distance_start_map_unit_scale" type="QString"/>
+            <Option value="MM" name="trim_distance_start_unit" type="QString"/>
+            <Option value="0" name="tweak_dash_pattern_on_corners" type="QString"/>
+            <Option value="0" name="use_custom_dash" type="QString"/>
+            <Option value="3x:0,0,0,0,0,0" name="width_map_unit_scale" type="QString"/>
           </Option>
           <data_defined_properties>
             <Option type="Map">
-              <Option name="name" value="" type="QString"/>
+              <Option value="" name="name" type="QString"/>
               <Option name="properties"/>
-              <Option name="type" value="collection" type="QString"/>
+              <Option value="collection" name="type" type="QString"/>
             </Option>
           </data_defined_properties>
         </layer>
       </symbol>
     </profileLineSymbol>
     <profileFillSymbol>
-      <symbol frame_rate="10" clip_to_extent="1" force_rhr="0" is_animated="0" name="" type="fill" alpha="1">
+      <symbol alpha="1" is_animated="0" frame_rate="10" name="" force_rhr="0" type="fill" clip_to_extent="1">
         <data_defined_properties>
           <Option type="Map">
-            <Option name="name" value="" type="QString"/>
+            <Option value="" name="name" type="QString"/>
             <Option name="properties"/>
-            <Option name="type" value="collection" type="QString"/>
+            <Option value="collection" name="type" type="QString"/>
           </Option>
         </data_defined_properties>
-        <layer class="SimpleFill" pass="0" enabled="1" locked="0" id="{d28efd4e-46ae-4e3d-8370-79ba1be9b38e}">
+        <layer class="SimpleFill" pass="0" locked="0" id="{74511b0f-643b-4b59-a72b-90a15f2a1506}" enabled="1">
           <Option type="Map">
-            <Option name="border_width_map_unit_scale" value="3x:0,0,0,0,0,0" type="QString"/>
-            <Option name="color" value="232,113,141,255,rgb:0.9098039,0.4431373,0.5529412,1" type="QString"/>
-            <Option name="joinstyle" value="bevel" type="QString"/>
-            <Option name="offset" value="0,0" type="QString"/>
-            <Option name="offset_map_unit_scale" value="3x:0,0,0,0,0,0" type="QString"/>
-            <Option name="offset_unit" value="MM" type="QString"/>
-            <Option name="outline_color" value="166,81,101,255,rgb:0.6498512,0.3165179,0.3949645,1" type="QString"/>
-            <Option name="outline_style" value="solid" type="QString"/>
-            <Option name="outline_width" value="0.2" type="QString"/>
-            <Option name="outline_width_unit" value="MM" type="QString"/>
-            <Option name="style" value="solid" type="QString"/>
+            <Option value="3x:0,0,0,0,0,0" name="border_width_map_unit_scale" type="QString"/>
+            <Option value="145,82,45,255,rgb:0.5686275,0.3215686,0.1764706,1" name="color" type="QString"/>
+            <Option value="bevel" name="joinstyle" type="QString"/>
+            <Option value="0,0" name="offset" type="QString"/>
+            <Option value="3x:0,0,0,0,0,0" name="offset_map_unit_scale" type="QString"/>
+            <Option value="MM" name="offset_unit" type="QString"/>
+            <Option value="104,59,32,255,rgb:0.4061494,0.2296788,0.1260395,1" name="outline_color" type="QString"/>
+            <Option value="solid" name="outline_style" type="QString"/>
+            <Option value="0.2" name="outline_width" type="QString"/>
+            <Option value="MM" name="outline_width_unit" type="QString"/>
+            <Option value="solid" name="style" type="QString"/>
           </Option>
           <data_defined_properties>
             <Option type="Map">
-              <Option name="name" value="" type="QString"/>
+              <Option value="" name="name" type="QString"/>
               <Option name="properties"/>
-              <Option name="type" value="collection" type="QString"/>
+              <Option value="collection" name="type" type="QString"/>
             </Option>
           </data_defined_properties>
         </layer>
       </symbol>
     </profileFillSymbol>
     <profileMarkerSymbol>
-      <symbol frame_rate="10" clip_to_extent="1" force_rhr="0" is_animated="0" name="" type="marker" alpha="1">
+      <symbol alpha="1" is_animated="0" frame_rate="10" name="" force_rhr="0" type="marker" clip_to_extent="1">
         <data_defined_properties>
           <Option type="Map">
-            <Option name="name" value="" type="QString"/>
+            <Option value="" name="name" type="QString"/>
             <Option name="properties"/>
-            <Option name="type" value="collection" type="QString"/>
+            <Option value="collection" name="type" type="QString"/>
           </Option>
         </data_defined_properties>
-        <layer class="SimpleMarker" pass="0" enabled="1" locked="0" id="{16886120-eb9b-4409-9b11-f49e8c00ff18}">
+        <layer class="SimpleMarker" pass="0" locked="0" id="{dc887927-b48d-484c-8758-9d2f39fd0e72}" enabled="1">
           <Option type="Map">
-            <Option name="angle" value="0" type="QString"/>
-            <Option name="cap_style" value="square" type="QString"/>
-            <Option name="color" value="232,113,141,255,rgb:0.9098039,0.4431373,0.5529412,1" type="QString"/>
-            <Option name="horizontal_anchor_point" value="1" type="QString"/>
-            <Option name="joinstyle" value="bevel" type="QString"/>
-            <Option name="name" value="diamond" type="QString"/>
-            <Option name="offset" value="0,0" type="QString"/>
-            <Option name="offset_map_unit_scale" value="3x:0,0,0,0,0,0" type="QString"/>
-            <Option name="offset_unit" value="MM" type="QString"/>
-            <Option name="outline_color" value="166,81,101,255,rgb:0.6498512,0.3165179,0.3949645,1" type="QString"/>
-            <Option name="outline_style" value="solid" type="QString"/>
-            <Option name="outline_width" value="0.2" type="QString"/>
-            <Option name="outline_width_map_unit_scale" value="3x:0,0,0,0,0,0" type="QString"/>
-            <Option name="outline_width_unit" value="MM" type="QString"/>
-            <Option name="scale_method" value="diameter" type="QString"/>
-            <Option name="size" value="3" type="QString"/>
-            <Option name="size_map_unit_scale" value="3x:0,0,0,0,0,0" type="QString"/>
-            <Option name="size_unit" value="MM" type="QString"/>
-            <Option name="vertical_anchor_point" value="1" type="QString"/>
+            <Option value="0" name="angle" type="QString"/>
+            <Option value="square" name="cap_style" type="QString"/>
+            <Option value="145,82,45,255,rgb:0.5686275,0.3215686,0.1764706,1" name="color" type="QString"/>
+            <Option value="1" name="horizontal_anchor_point" type="QString"/>
+            <Option value="bevel" name="joinstyle" type="QString"/>
+            <Option value="diamond" name="name" type="QString"/>
+            <Option value="0,0" name="offset" type="QString"/>
+            <Option value="3x:0,0,0,0,0,0" name="offset_map_unit_scale" type="QString"/>
+            <Option value="MM" name="offset_unit" type="QString"/>
+            <Option value="104,59,32,255,rgb:0.4061494,0.2296788,0.1260395,1" name="outline_color" type="QString"/>
+            <Option value="solid" name="outline_style" type="QString"/>
+            <Option value="0.2" name="outline_width" type="QString"/>
+            <Option value="3x:0,0,0,0,0,0" name="outline_width_map_unit_scale" type="QString"/>
+            <Option value="MM" name="outline_width_unit" type="QString"/>
+            <Option value="diameter" name="scale_method" type="QString"/>
+            <Option value="3" name="size" type="QString"/>
+            <Option value="3x:0,0,0,0,0,0" name="size_map_unit_scale" type="QString"/>
+            <Option value="MM" name="size_unit" type="QString"/>
+            <Option value="1" name="vertical_anchor_point" type="QString"/>
           </Option>
           <data_defined_properties>
             <Option type="Map">
-              <Option name="name" value="" type="QString"/>
+              <Option value="" name="name" type="QString"/>
               <Option name="properties"/>
-              <Option name="type" value="collection" type="QString"/>
+              <Option value="collection" name="type" type="QString"/>
             </Option>
           </data_defined_properties>
         </layer>
@@ -155,50 +155,50 @@
   </geometryOptions>
   <legend showLabelLegend="0" type="default-vector"/>
   <fieldConfiguration>
-    <field name="GLOBALID" configurationFlags="NoFlag">
+    <field configurationFlags="NoFlag" name="GLOBALID">
       <editWidget type="">
         <config>
           <Option/>
         </config>
       </editWidget>
     </field>
-    <field name="REL_GLOBALID" configurationFlags="NoFlag">
+    <field configurationFlags="NoFlag" name="REL_GLOBALID">
       <editWidget type="">
         <config>
           <Option/>
         </config>
       </editWidget>
     </field>
-    <field name="CONTENT_TYPE" configurationFlags="NoFlag">
+    <field configurationFlags="NoFlag" name="CONTENT_TYPE">
       <editWidget type="ValueMap">
         <config>
           <Option type="Map">
             <Option name="map" type="Map">
-              <Option name="Documento PDF" value="application/pdf" type="QString"/>
-              <Option name="Immagine JPEG" value="image/jpeg" type="QString"/>
-              <Option name="Immagine PNG" value="image/png" type="QString"/>
-              <Option name="Immagine TIFF" value="image/tiff" type="QString"/>
-              <Option name="Video MP4" value="video/mp4" type="QString"/>
+              <Option value="application/pdf" name="Documento PDF" type="QString"/>
+              <Option value="image/jpeg" name="Immagine JPEG" type="QString"/>
+              <Option value="image/png" name="Immagine PNG" type="QString"/>
+              <Option value="image/tiff" name="Immagine TIFF" type="QString"/>
+              <Option value="video/mp4" name="Video MP4" type="QString"/>
             </Option>
           </Option>
         </config>
       </editWidget>
     </field>
-    <field name="ATT_NAME" configurationFlags="NoFlag">
+    <field configurationFlags="NoFlag" name="ATT_NAME">
       <editWidget type="">
         <config>
           <Option/>
         </config>
       </editWidget>
     </field>
-    <field name="DATA_SIZE" configurationFlags="NoFlag">
+    <field configurationFlags="NoFlag" name="DATA_SIZE">
       <editWidget type="">
         <config>
           <Option/>
         </config>
       </editWidget>
     </field>
-    <field name="DATA" configurationFlags="NoFlag">
+    <field configurationFlags="NoFlag" name="DATA">
       <editWidget type="Hidden">
         <config>
           <Option/>
@@ -207,52 +207,52 @@
     </field>
   </fieldConfiguration>
   <aliases>
-    <alias index="0" field="GLOBALID" name="ID globale"/>
-    <alias index="1" field="REL_GLOBALID" name="Feature collegata"/>
-    <alias index="2" field="CONTENT_TYPE" name="Tipo contenuto"/>
-    <alias index="3" field="ATT_NAME" name="Nome file"/>
-    <alias index="4" field="DATA_SIZE" name="Dimensione (byte)"/>
-    <alias index="5" field="DATA" name="Dati binari"/>
+    <alias field="GLOBALID" index="0" name="ID globale"/>
+    <alias field="REL_GLOBALID" index="1" name="Feature collegata"/>
+    <alias field="CONTENT_TYPE" index="2" name="Tipo contenuto"/>
+    <alias field="ATT_NAME" index="3" name="Nome file"/>
+    <alias field="DATA_SIZE" index="4" name="Dimensione (byte)"/>
+    <alias field="DATA" index="5" name="Dati binari"/>
   </aliases>
   <defaults>
-    <default expression="" field="GLOBALID" applyOnUpdate="0"/>
-    <default expression="" field="REL_GLOBALID" applyOnUpdate="0"/>
-    <default expression="" field="CONTENT_TYPE" applyOnUpdate="0"/>
-    <default expression="" field="ATT_NAME" applyOnUpdate="0"/>
-    <default expression="" field="DATA_SIZE" applyOnUpdate="0"/>
-    <default expression="" field="DATA" applyOnUpdate="0"/>
+    <default expression="" applyOnUpdate="0" field="GLOBALID"/>
+    <default expression="" applyOnUpdate="0" field="REL_GLOBALID"/>
+    <default expression="" applyOnUpdate="0" field="CONTENT_TYPE"/>
+    <default expression="" applyOnUpdate="0" field="ATT_NAME"/>
+    <default expression="" applyOnUpdate="0" field="DATA_SIZE"/>
+    <default expression="" applyOnUpdate="0" field="DATA"/>
   </defaults>
   <constraints>
-    <constraint field="GLOBALID" unique_strength="0" exp_strength="0" notnull_strength="0" constraints="0"/>
-    <constraint field="REL_GLOBALID" unique_strength="0" exp_strength="0" notnull_strength="0" constraints="0"/>
-    <constraint field="CONTENT_TYPE" unique_strength="0" exp_strength="0" notnull_strength="0" constraints="0"/>
-    <constraint field="ATT_NAME" unique_strength="0" exp_strength="0" notnull_strength="0" constraints="0"/>
-    <constraint field="DATA_SIZE" unique_strength="0" exp_strength="0" notnull_strength="0" constraints="0"/>
-    <constraint field="DATA" unique_strength="0" exp_strength="0" notnull_strength="0" constraints="0"/>
+    <constraint unique_strength="0" notnull_strength="0" field="GLOBALID" constraints="0" exp_strength="0"/>
+    <constraint unique_strength="0" notnull_strength="0" field="REL_GLOBALID" constraints="0" exp_strength="0"/>
+    <constraint unique_strength="0" notnull_strength="0" field="CONTENT_TYPE" constraints="0" exp_strength="0"/>
+    <constraint unique_strength="0" notnull_strength="0" field="ATT_NAME" constraints="0" exp_strength="0"/>
+    <constraint unique_strength="0" notnull_strength="0" field="DATA_SIZE" constraints="0" exp_strength="0"/>
+    <constraint unique_strength="0" notnull_strength="0" field="DATA" constraints="0" exp_strength="0"/>
   </constraints>
   <constraintExpressions>
-    <constraint exp="" desc="" field="GLOBALID"/>
-    <constraint exp="" desc="" field="REL_GLOBALID"/>
-    <constraint exp="" desc="" field="CONTENT_TYPE"/>
-    <constraint exp="" desc="" field="ATT_NAME"/>
-    <constraint exp="" desc="" field="DATA_SIZE"/>
-    <constraint exp="" desc="" field="DATA"/>
+    <constraint desc="" field="GLOBALID" exp=""/>
+    <constraint desc="" field="REL_GLOBALID" exp=""/>
+    <constraint desc="" field="CONTENT_TYPE" exp=""/>
+    <constraint desc="" field="ATT_NAME" exp=""/>
+    <constraint desc="" field="DATA_SIZE" exp=""/>
+    <constraint desc="" field="DATA" exp=""/>
   </constraintExpressions>
   <expressionfields/>
   <attributeactions>
-    <defaultAction key="Feature" value="{f260feb5-c7d4-4100-a8e9-c81d987cfe22}"/>
-    <actionsetting id="{f260feb5-c7d4-4100-a8e9-c81d987cfe22}" isEnabledOnlyWhenEditable="0" name="Apri allegato" shortTitle="" capture="0" action="import base64, os, tempfile&#xa;from qgis.PyQt.QtCore import QUrl&#xa;from qgis.PyQt.QtGui import QDesktopServices&#xa;_dati = base64.b64decode('[% to_base64(&quot;DATA&quot;) %]')&#xa;_nome = '[% &quot;ATT_NAME&quot; %]'&#xa;_percorso = os.path.join(tempfile.gettempdir(), 'gdb_attacher_' + _nome)&#xa;with open(_percorso, 'wb') as _f:&#xa;    _f.write(_dati)&#xa;QDesktopServices.openUrl(QUrl.fromLocalFile(_percorso))" icon="" notificationMessage="" type="1"/>
-    <actionsetting id="{44ee6243-d481-475d-9b81-9c1348d98a54}" isEnabledOnlyWhenEditable="0" name="Salva allegato con nome…" shortTitle="" capture="0" action="import base64&#xa;from qgis.PyQt.QtWidgets import QFileDialog&#xa;_dati = base64.b64decode('[% to_base64(&quot;DATA&quot;) %]')&#xa;_percorso, _ = QFileDialog.getSaveFileName(None, 'Salva allegato', '[% &quot;ATT_NAME&quot; %]')&#xa;if _percorso:&#xa;    with open(_percorso, 'wb') as _f:&#xa;        _f.write(_dati)" icon="" notificationMessage="" type="1"/>
+    <defaultAction key="Feature" value="{409ba4d2-98d7-42ce-b4c8-50d67bdd7ea9}"/>
+    <actionsetting action="import base64, os, tempfile&#xa;from qgis.PyQt.QtCore import QUrl&#xa;from qgis.PyQt.QtGui import QDesktopServices&#xa;_dati = base64.b64decode('[% to_base64(&quot;DATA&quot;) %]')&#xa;_nome = '[% &quot;ATT_NAME&quot; %]'&#xa;_percorso = os.path.join(tempfile.gettempdir(), 'gdb_attacher_' + _nome)&#xa;with open(_percorso, 'wb') as _f:&#xa;    _f.write(_dati)&#xa;QDesktopServices.openUrl(QUrl.fromLocalFile(_percorso))" isEnabledOnlyWhenEditable="0" id="{409ba4d2-98d7-42ce-b4c8-50d67bdd7ea9}" shortTitle="" icon="" notificationMessage="" name="Apri allegato" capture="0" type="1"/>
+    <actionsetting action="import base64&#xa;from qgis.PyQt.QtWidgets import QFileDialog&#xa;_dati = base64.b64decode('[% to_base64(&quot;DATA&quot;) %]')&#xa;_percorso, _ = QFileDialog.getSaveFileName(None, 'Salva allegato', '[% &quot;ATT_NAME&quot; %]')&#xa;if _percorso:&#xa;    with open(_percorso, 'wb') as _f:&#xa;        _f.write(_dati)" isEnabledOnlyWhenEditable="0" id="{2b7d5a7d-0b01-4aab-9ce8-a4f69bdfb2d2}" shortTitle="" icon="" notificationMessage="" name="Salva allegato con nome…" capture="0" type="1"/>
   </attributeactions>
-  <attributetableconfig sortExpression="" actionWidgetStyle="dropDown" sortOrder="0">
+  <attributetableconfig actionWidgetStyle="dropDown" sortExpression="" sortOrder="0">
     <columns>
-      <column width="-1" name="GLOBALID" type="field" hidden="0"/>
-      <column width="-1" name="REL_GLOBALID" type="field" hidden="0"/>
-      <column width="-1" name="CONTENT_TYPE" type="field" hidden="0"/>
-      <column width="-1" name="ATT_NAME" type="field" hidden="0"/>
-      <column width="-1" name="DATA_SIZE" type="field" hidden="0"/>
-      <column width="-1" name="DATA" type="field" hidden="1"/>
-      <column width="-1" type="actions" hidden="1"/>
+      <column hidden="0" width="-1" name="GLOBALID" type="field"/>
+      <column hidden="0" width="-1" name="REL_GLOBALID" type="field"/>
+      <column hidden="0" width="-1" name="CONTENT_TYPE" type="field"/>
+      <column hidden="0" width="-1" name="ATT_NAME" type="field"/>
+      <column hidden="0" width="-1" name="DATA_SIZE" type="field"/>
+      <column hidden="1" width="-1" name="DATA" type="field"/>
+      <column hidden="1" width="-1" type="actions"/>
     </columns>
   </attributetableconfig>
   <conditionalstyles>
@@ -268,41 +268,41 @@
   <featformsuppress>0</featformsuppress>
   <editorlayout>tablayout</editorlayout>
   <attributeEditorForm>
-    <labelStyle overrideLabelFont="0" overrideLabelColor="0" labelColor="">
-      <labelFont strikethrough="0" italic="0" style="" bold="0" description="MS Shell Dlg 2,8.25,-1,5,50,0,0,0,0,0" underline="0"/>
+    <labelStyle overrideLabelColor="0" labelColor="" overrideLabelFont="0">
+      <labelFont strikethrough="0" bold="0" style="" italic="0" underline="0" description="MS Shell Dlg 2,8.25,-1,5,50,0,0,0,0,0"/>
     </labelStyle>
-    <attributeEditorContainer showLabel="1" collapsedExpressionEnabled="0" collapsedExpression="" visibilityExpressionEnabled="0" name="Allegato" horizontalStretch="0" visibilityExpression="" verticalStretch="0" type="GroupBox" columnCount="1" collapsed="0" groupBox="1">
-      <labelStyle overrideLabelFont="0" overrideLabelColor="0" labelColor="">
-        <labelFont strikethrough="0" italic="0" style="" bold="0" description="MS Shell Dlg 2,8.25,-1,5,50,0,0,0,0,0" underline="0"/>
+    <attributeEditorContainer groupBox="1" columnCount="1" visibilityExpressionEnabled="0" collapsedExpression="" verticalStretch="0" collapsedExpressionEnabled="0" visibilityExpression="" collapsed="0" name="Allegato" showLabel="1" horizontalStretch="0" type="GroupBox">
+      <labelStyle overrideLabelColor="0" labelColor="" overrideLabelFont="0">
+        <labelFont strikethrough="0" bold="0" style="" italic="0" underline="0" description="MS Shell Dlg 2,8.25,-1,5,50,0,0,0,0,0"/>
       </labelStyle>
-      <attributeEditorField index="3" showLabel="1" name="ATT_NAME" horizontalStretch="0" verticalStretch="0">
-        <labelStyle overrideLabelFont="0" overrideLabelColor="0" labelColor="">
-          <labelFont strikethrough="0" italic="0" style="" bold="0" description="MS Shell Dlg 2,8.25,-1,5,50,0,0,0,0,0" underline="0"/>
+      <attributeEditorField verticalStretch="0" index="3" name="ATT_NAME" showLabel="1" horizontalStretch="0">
+        <labelStyle overrideLabelColor="0" labelColor="" overrideLabelFont="0">
+          <labelFont strikethrough="0" bold="0" style="" italic="0" underline="0" description="MS Shell Dlg 2,8.25,-1,5,50,0,0,0,0,0"/>
         </labelStyle>
       </attributeEditorField>
-      <attributeEditorField index="2" showLabel="1" name="CONTENT_TYPE" horizontalStretch="0" verticalStretch="0">
-        <labelStyle overrideLabelFont="0" overrideLabelColor="0" labelColor="">
-          <labelFont strikethrough="0" italic="0" style="" bold="0" description="MS Shell Dlg 2,8.25,-1,5,50,0,0,0,0,0" underline="0"/>
+      <attributeEditorField verticalStretch="0" index="2" name="CONTENT_TYPE" showLabel="1" horizontalStretch="0">
+        <labelStyle overrideLabelColor="0" labelColor="" overrideLabelFont="0">
+          <labelFont strikethrough="0" bold="0" style="" italic="0" underline="0" description="MS Shell Dlg 2,8.25,-1,5,50,0,0,0,0,0"/>
         </labelStyle>
       </attributeEditorField>
-      <attributeEditorField index="4" showLabel="1" name="DATA_SIZE" horizontalStretch="0" verticalStretch="0">
-        <labelStyle overrideLabelFont="0" overrideLabelColor="0" labelColor="">
-          <labelFont strikethrough="0" italic="0" style="" bold="0" description="MS Shell Dlg 2,8.25,-1,5,50,0,0,0,0,0" underline="0"/>
+      <attributeEditorField verticalStretch="0" index="4" name="DATA_SIZE" showLabel="1" horizontalStretch="0">
+        <labelStyle overrideLabelColor="0" labelColor="" overrideLabelFont="0">
+          <labelFont strikethrough="0" bold="0" style="" italic="0" underline="0" description="MS Shell Dlg 2,8.25,-1,5,50,0,0,0,0,0"/>
         </labelStyle>
       </attributeEditorField>
     </attributeEditorContainer>
-    <attributeEditorContainer showLabel="1" collapsedExpressionEnabled="0" collapsedExpression="" visibilityExpressionEnabled="0" name="Tecnici (non toccare)" horizontalStretch="0" visibilityExpression="" verticalStretch="0" type="GroupBox" columnCount="1" collapsed="1" groupBox="1">
-      <labelStyle overrideLabelFont="0" overrideLabelColor="0" labelColor="">
-        <labelFont strikethrough="0" italic="0" style="" bold="0" description="MS Shell Dlg 2,8.25,-1,5,50,0,0,0,0,0" underline="0"/>
+    <attributeEditorContainer groupBox="1" columnCount="1" visibilityExpressionEnabled="0" collapsedExpression="" verticalStretch="0" collapsedExpressionEnabled="0" visibilityExpression="" collapsed="1" name="Tecnici (non toccare)" showLabel="1" horizontalStretch="0" type="GroupBox">
+      <labelStyle overrideLabelColor="0" labelColor="" overrideLabelFont="0">
+        <labelFont strikethrough="0" bold="0" style="" italic="0" underline="0" description="MS Shell Dlg 2,8.25,-1,5,50,0,0,0,0,0"/>
       </labelStyle>
-      <attributeEditorField index="0" showLabel="1" name="GLOBALID" horizontalStretch="0" verticalStretch="0">
-        <labelStyle overrideLabelFont="0" overrideLabelColor="0" labelColor="">
-          <labelFont strikethrough="0" italic="0" style="" bold="0" description="MS Shell Dlg 2,8.25,-1,5,50,0,0,0,0,0" underline="0"/>
+      <attributeEditorField verticalStretch="0" index="0" name="GLOBALID" showLabel="1" horizontalStretch="0">
+        <labelStyle overrideLabelColor="0" labelColor="" overrideLabelFont="0">
+          <labelFont strikethrough="0" bold="0" style="" italic="0" underline="0" description="MS Shell Dlg 2,8.25,-1,5,50,0,0,0,0,0"/>
         </labelStyle>
       </attributeEditorField>
-      <attributeEditorField index="1" showLabel="1" name="REL_GLOBALID" horizontalStretch="0" verticalStretch="0">
-        <labelStyle overrideLabelFont="0" overrideLabelColor="0" labelColor="">
-          <labelFont strikethrough="0" italic="0" style="" bold="0" description="MS Shell Dlg 2,8.25,-1,5,50,0,0,0,0,0" underline="0"/>
+      <attributeEditorField verticalStretch="0" index="1" name="REL_GLOBALID" showLabel="1" horizontalStretch="0">
+        <labelStyle overrideLabelColor="0" labelColor="" overrideLabelFont="0">
+          <labelFont strikethrough="0" bold="0" style="" italic="0" underline="0" description="MS Shell Dlg 2,8.25,-1,5,50,0,0,0,0,0"/>
         </labelStyle>
       </attributeEditorField>
     </attributeEditorContainer>
