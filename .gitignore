@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+
+# QGIS / GDAL
+*.qgs~ 
+*.qgz~ 
+
+# FileGDB / dati locali (non committare i gdb veri)
+*.gdb/
+*.gdb-journal
+*.lock
+*.tif
+*.tiff
+*.jpg
+*.jpeg
+*.png
+*.pdf
+
+# OS
+.DS_Store
+Thumbs.db
+Desktop.ini
