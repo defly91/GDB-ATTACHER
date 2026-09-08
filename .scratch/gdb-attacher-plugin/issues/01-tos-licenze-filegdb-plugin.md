@@ -1,6 +1,6 @@
 Map: [map](../map.md)
 Type: research (AFK)
-Status: done
+Status: resolved
 Blocked by: none
 Labels: wayfinder:research
 
