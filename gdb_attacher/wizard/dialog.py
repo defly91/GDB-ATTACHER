@@ -741,6 +741,8 @@ class PaginaEsegui(PaginaBase):
 
         self.riepilogo = QLabel("")
         self.riepilogo.setWordWrap(True)
+        self.contatori = QLabel("")
+        self.contatori.setWordWrap(True)
 
         self.radio_backup = QRadioButton(self.t("backup_attivo"))
         self.radio_backup.setChecked(True)
@@ -781,6 +783,7 @@ class PaginaEsegui(PaginaBase):
 
         disposizione = QVBoxLayout(self)
         disposizione.addWidget(self.riepilogo)
+        disposizione.addWidget(self.contatori)
         disposizione.addWidget(gruppo_backup)
         disposizione.addWidget(self.conferma)
         riga = QHBoxLayout()
@@ -809,6 +812,16 @@ class PaginaEsegui(PaginaBase):
         tabella = attach.nome_tabella_allegati(layer.name()) if layer else "—"
         da_scrivere = sum(1 for c in self.w.candidati if c.da_scrivere)
         self.riepilogo.setText(self.t("riepilogo_esecuzione", ok=da_scrivere, tabella=tabella))
+        # Conferma a conteggi (ticket 03): qui solo i numeri, il dettaglio sta nel naming.
+        conteggi = naming.conteggi(self.w.candidati)
+        self.contatori.setText("   ".join([
+            self.t("totale_ok", n=conteggi["ok"] + conteggi["collisione"]),
+            self.t("atto_totale_duplicati", n=conteggi["duplicato"]),
+            self.t("totale_missing", n=conteggi["missing"] + conteggi["file_ignoto"]),
+            self.t("totale_collisioni", n=conteggi["collisione"]),
+            self.t("totale_saltati", n=conteggi["saltati"] + conteggi["salta"]),
+        ]))
+        self.contatori.setStyleSheet("color:#555")
         self.cartella_backup.setText(
             os.path.dirname(attach.percorso_gdb(layer.source())) if layer
             and attach.percorso_gdb(layer.source()) else ""
