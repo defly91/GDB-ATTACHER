@@ -827,6 +827,10 @@ class PaginaNaming(PaginaBase):
             # `saltati` è già la somma del core (vuoto + salta + …): non risommarlo.
             self.t("totale_saltati", n=conteggi["saltati"]),
         ]
+        if conteggi["chiave_ignota"]:
+            # Le righe del CSV senza corrispondenza nel layer: sono contate come
+            # saltate, ma qui si dice *perché* e quante (SPEC §6).
+            pezzi.append(self.t("csv_avviso_chiavi_ignote", n=conteggi["chiave_ignota"]))
         if avvisi:
             pezzi.append(self.t("esito_avvisi", n=len(avvisi)))
         self.conteggi.setText("   ".join(pezzi))
