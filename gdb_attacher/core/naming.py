@@ -64,7 +64,7 @@ VARIABILI_FORMULA = ("original_name", "stem", "ext", "index")
 
 #: Stati di un candidato allegato (i codici → testi stanno in ``wizard/strings.py``).
 STATI = ("ok", "missing", "collisione", "vuoto", "salta", "errore",
-         "chiave_ignota", "file_ignoto")
+         "chiave_ignota", "file_ignoto", "duplicato")
 
 #: Colonne riconosciute automaticamente nel CSV.
 NOMI_COLONNA_CHIAVE = ("globalid", "rel_globalid", "id", "chiave", "key", "codice")
@@ -369,13 +369,22 @@ def candidati_da_csv(elenco: ElencoCsv, righe, risolutore) -> list:
     return candidati
 
 
-def risolvi_collisioni(candidati, esistenti=()) -> list:
-    """Rinomina i candidati che collidono sullo stesso ``(REL_GLOBALID, ATT_NAME)``.
+def risolvi_collisioni(candidati, esistenti=(), rinomina_se_esistente: bool = False) -> list:
+    """Deduplica e rinomina i candidati che collidono sullo stesso ``(REL_GLOBALID, ATT_NAME)``.
 
-    Collisione = la coppia è già nella tabella allegati (``esistenti``) **oppure**
-    compare due volte nel lotto. Suffisso ``_2``, ``_3``… prima dell'estensione; il
-    primo tiene il nome pulito. Solo i candidati ``ok`` vengono rinominati: gli altri
-    non si scrivono e quindi non possono collidere.
+    Due situazioni diverse, due comportamenti (vedi anche il commento qui sotto):
+
+    - **coppia già nella tabella allegati** (``esistenti``): deduplica/idempotenza →
+      stato ``duplicato`` e non si scrive (contata fra i «già presenti» nel report).
+      Questo è il comportamento predefinito, quello che rende ripetibile un batch:
+      rilanciare lo stesso lavoro non duplica nulla. Con ``rinomina_se_esistente``
+      si sceglie invece la regola del suffisso (utente esplicito).
+    - **coppia ripetuta dentro il lotto**: collisione di naming → suffisso ``_2``,
+      ``_3``… prima dell'estensione, il primo tiene il nome pulito.
+
+    Nota di progetto: i due criteri vengono da decisioni diverse dello stesso effort
+    (dedup del ticket 02, suffisso del ticket 06). Il default segue la regola di
+    idempotenza, la scelta di rinominare resta a un clic nel wizard.
     """
     from .attach import chiave_dedup
 
@@ -387,6 +396,13 @@ def risolvi_collisioni(candidati, esistenti=()) -> list:
             continue
 
         base = candidato.nome_allegato
+        chiave_base = chiave_dedup(candidato.id_parent, base)
+        if chiave_base and chiave_base in usate and not rinomina_se_esistente:
+            candidato.stato = "duplicato"
+            candidato.motivo = "allegato già presente nella tabella allegati"
+            risultato.append(candidato)
+            continue
+
         scelto = ""
         for numero in range(1, MAX_SUFFISSO + 1):
             tentativo = base if numero == 1 else con_suffisso(base, numero)
@@ -603,7 +619,7 @@ def conteggi(candidati) -> dict:
     """
     risultato = {
         "ok": 0, "missing": 0, "collisione": 0, "vuoto": 0, "salta": 0,
-        "errore": 0, "chiave_ignota": 0, "file_ignoto": 0,
+        "errore": 0, "chiave_ignota": 0, "file_ignoto": 0, "duplicato": 0,
     }
     for candidato in candidati:
         risultato[candidato.stato] = risultato.get(candidato.stato, 0) + 1
