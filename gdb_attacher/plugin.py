@@ -10,7 +10,6 @@ from __future__ import annotations
 
 import os
 
-from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction, QActionGroup, QMessageBox
 

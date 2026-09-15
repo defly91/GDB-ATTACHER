@@ -467,6 +467,27 @@ def _trova_colonna(intestazioni, candidati) -> str:
     return ""
 
 
+def intestazioni_csv(percorso: str, separatore: str = None) -> tuple:
+    """Legge solo l'intestazione del CSV: ``(colonne, separatore, encoding)``.
+
+    Serve al wizard per popolare i menu delle colonne *prima* di sapere quale sia la
+    colonna chiave. Su file illeggibile ritorna ``([], messaggio, "")``.
+    """
+    try:
+        with open(percorso, "rb") as flusso:
+            grezzo = flusso.read()
+    except OSError as errore:
+        return [], f"non riesco a leggere il file: {errore}", ""
+
+    testo, codifica = _decodifica(grezzo)
+    separatore = separatore or _rileva_separatore(testo)
+    lettore = list(_csv.reader(io.StringIO(testo), delimiter=separatore))
+    lettore = [riga for riga in lettore if any((cella or "").strip() for cella in riga)]
+    if not lettore:
+        return [], "il CSV è vuoto o senza intestazione", codifica
+    return [str(cella).strip() for cella in lettore[0]], separatore, codifica
+
+
 def leggi_csv_allegati(percorso: str, chiave: str = "GLOBALID", colonna_file: str = None,
                        colonna_att_name: str = None, separatore: str = None,
                        encoding: str = None) -> ElencoCsv:

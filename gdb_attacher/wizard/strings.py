@@ -47,6 +47,7 @@ TESTI_STATO = {
     "duplicato": "stato_duplicato",
     "chiave_ignota": "stato_chiave_ignota",
     "file_ignoto": "stato_file_ignoto",
+    "avviso": "stato_avviso",
 }
 
 # ---------------------------------------------------------------- dizionario
@@ -190,7 +191,7 @@ STRINGHE = {
         "csv_separatore": "Separatore: {separatore} (rilevato)",
         "csv_encoding": "Codifica: {encoding}",
         "csv_blocco_illegibile": "CSV illeggibile: {errore}",
-        "csv_blocco_chiave": "Nel CSV non c'è la colonna chiave «{chiave}».",
+        "csv_blocco_chiave": "Nel CSV non c'è la colonna chiave «{colonna}».",
         "csv_avviso_chiave_mancante": "Il CSV non ha la colonna «{colonna}» indicata: controllo saltato.",
         "csv_avviso_chiavi_ignote": "{n} chiavi del CSV non esistono nel layer: verranno saltate.",
         "csv_avviso_chiavi_duplicate": "{n} chiavi del CSV sono ripetute (più allegati sulla stessa feature).",
@@ -425,7 +426,7 @@ STRINGHE = {
         "csv_separatore": "Delimiter: {separatore} (detected)",
         "csv_encoding": "Encoding: {encoding}",
         "csv_blocco_illegibile": "Unreadable CSV: {errore}",
-        "csv_blocco_chiave": "The CSV has no key column “{chiave}”.",
+        "csv_blocco_chiave": "The CSV has no key column “{colonna}”.",
         "csv_avviso_chiave_mancante": "The CSV has no column “{colonna}”: check skipped.",
         "csv_avviso_chiavi_ignote": "{n} CSV keys do not exist in the layer: they will be skipped.",
         "csv_avviso_chiavi_duplicate": "{n} CSV keys are repeated (several attachments on the same feature).",
