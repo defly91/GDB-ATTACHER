@@ -69,6 +69,10 @@ def test_durante_il_batch_i_pulsanti_del_wizard_sono_bloccati(monkeypatch, tmp_p
 
 
 def test_i_pulsanti_tornano_attivi_anche_se_la_scrittura_solleva(monkeypatch, tmp_path):
+    """Aggiornato con la correzione 7: `esegui()` ora **cattura** l'imprevisto e lo
+    mostra tradotto, invece di lasciarlo uscire come traceback. La proprietà che
+    questo test difende non cambia: i pulsanti bloccati dal batch si riabilitano
+    sempre, anche quando la scrittura muore a metà."""
     wizard, _ = wizard_pronto(monkeypatch, tmp_path)
     wizard.pagina_naming.aggiorna_anteprima()
 
@@ -76,8 +80,7 @@ def test_i_pulsanti_tornano_attivi_anche_se_la_scrittura_solleva(monkeypatch, tm
         raise RuntimeError("errore a metà scrittura")
 
     monkeypatch.setattr(attach, "scrivi_allegati", esplode)
-    with pytest.raises(RuntimeError):
-        esegui_senza_backup(wizard)
+    esegui_senza_backup(wizard)
     assert stati_pulsanti(wizard) == {nome: True for nome in PULSANTI}
     assert wizard.pagina_esegui.in_corso() is False
 

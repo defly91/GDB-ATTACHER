@@ -96,6 +96,21 @@ class PaginaBase(QWizardPage):
                 tabella.setItem(numero, colonna, elemento)
         tabella.resizeColumnsToContents()
 
+    # -------------------------------------------------- dialoghi di file
+
+    def _filtro_csv(self, tutti=False):
+        """Filtro dei dialoghi file CSV, tradotto (il filtro lo legge l'utente).
+
+        In italiano resta esattamente quello di prima; in inglese non mostra più
+        «Tutti i file (*)» dentro un'interfaccia tradotta.
+        """
+        filtro = self.t("filtro_csv")
+        return f"{filtro};;{self.t('filtro_tutti_i_file')}" if tutti else filtro
+
+    def _filtro_csv_export(self):
+        """Filtro del salvataggio del report CSV."""
+        return self.t("filtro_csv_export")
+
 
 class PaginaLayer(PaginaBase):
     """Passo 1 — scelta del layer sorgente fra quelli già in progetto su FileGDB."""
@@ -369,6 +384,7 @@ class PaginaDiscovery(PaginaBase):
         self.completeChanged.emit()
 
     def scansiona(self):
+        """Analizza i campi foto. Un errore imprevisto si mostra, non esce come traceback."""
         cartella = self.cartella.text().strip()
         if cartella and not os.path.isdir(cartella):
             QMessageBox.warning(self, self.t("attenzione_titolo"),
@@ -377,7 +393,15 @@ class PaginaDiscovery(PaginaBase):
         self.w.cartella_base = cartella
         self.stato.setText(self.t("scansione_in_corso"))
         QApplication.processEvents()
-        self.w.righe_discovery = discovery.suggerisci_campi(self.w.layer_sorgente, cartella)
+        try:
+            self.w.righe_discovery = discovery.suggerisci_campi(self.w.layer_sorgente, cartella)
+        except Exception as errore:
+            # La tabella precedente resta: si perde la scansione, non il passo.
+            self.w.righe_discovery = []
+            self.stato.setText(self.t("errore_scansione", errore=errore))
+            self.stato.setStyleSheet("color:#a00")
+            self.completeChanged.emit()
+            return
         righe = [
             (t_livello(r.livello, self.w.lingua), r.campo, r.tipo, f"{r.n_non_null}/{r.n_valori}",
              f"{r.esiste_rate:.0%}", f"{r.multi_rate:.0%}", "sì" if r.nome_match else "—",
@@ -979,6 +1003,18 @@ class PaginaEsegui(PaginaBase):
         self.bottone_annulla.setEnabled(False)
 
     def esegui(self):
+        """Slot di «Esegui»: il batch non deve mai uscire come traceback.
+
+        Un errore imprevisto (disco pieno, tabella sparita, core che solleva) si
+        mostra tradotto e **non** porta via il report: le righe già costruite
+        restano esportabili in CSV.
+        """
+        try:
+            self._esegui_batch()
+        except Exception as errore:
+            self._errore_imprevisto(errore)
+
+    def _esegui_batch(self):
         layer = self.w.layer_sorgente
         layer_allegati = self.w.esito.layer_allegati
 
@@ -992,7 +1028,8 @@ class PaginaEsegui(PaginaBase):
                 destinazione = attach.backup_gdb(percorso_gdb, self.cartella_backup.text().strip() or None)
                 self.esito.setText(self.t("backup_fatto", percorso=destinazione))
             except OSError as errore:
-                QMessageBox.critical(self, self.t("backup_errore", errore=errore), str(errore))
+                QMessageBox.critical(self, self.t("errore_titolo"),
+                                     self.t("backup_errore", errore=errore))
                 return
 
         # Ultimo controllo prima di scrivere: gli stati dei candidati si ricompongono
@@ -1006,6 +1043,8 @@ class PaginaEsegui(PaginaBase):
         self.barra.setVisible(True)
         self.barra.setRange(0, max(1, len(candidati)))
         self.barra.setValue(0)
+        self.esito.setText(self.t("esecuzione_in_corso"))
+        self.esito.setStyleSheet("color:#555")
         self._imposta_in_corso(True)
         QApplication.setOverrideCursor(Qt.WaitCursor)
         try:
@@ -1035,19 +1074,51 @@ class PaginaEsegui(PaginaBase):
             self.esito.setText(self.t("esecuzione_annullata"))
             self.esito.setStyleSheet("color:#a60")
         else:
-            self.esito.setText(self.t(
-                "esito_scrittura",
-                aggiunti=statistica.aggiunti,
-                duplicati=self.w.report.duplicati,
-                mancanti=self.w.report.mancanti,
-                saltati=self.w.report.saltati,
-                errori=self.w.report.errori,
-            ))
-            self.esito.setStyleSheet("color:#060")
+            errore_commit = (getattr(self.w.report, "errore_commit", "")
+                             or getattr(statistica, "errore_commit", ""))
+            if errore_commit:
+                # Il commit è andato male: quello che si vede in tabella non c'è. Dirlo
+                # chiaramente è più importante di un «aggiunti: N» che sarebbe falso.
+                self.esito.setText(self.t("esito_commit_fallito", errore=errore_commit))
+                self.esito.setStyleSheet("color:#a00")
+            else:
+                self.esito.setText(self.t(
+                    "esito_scrittura",
+                    aggiunti=getattr(self.w.report, "aggiunti", statistica.aggiunti),
+                    duplicati=self.w.report.duplicati,
+                    mancanti=self.w.report.mancanti,
+                    saltati=self.w.report.saltati,
+                    errori=self.w.report.errori,
+                ))
+                self.esito.setStyleSheet("color:#060")
 
         vuoto = not self.w.report.righe
         self.bottone_export.setEnabled(not vuoto)
         self.bottone_export_tutto.setEnabled(not vuoto)
+        self.completeChanged.emit()
+
+    def _errore_imprevisto(self, errore):
+        """Mostra un errore imprevisto e salva il salvabile (il report).
+
+        Il wizard resta aperto: l'utente vede il motivo tradotto e, se il lotto era
+        già stato costruito, può comunque esportare il report dei candidati invece
+        di perdere tutto insieme al traceback.
+        """
+        self._imposta_in_corso(False)
+        self.barra.setVisible(False)
+        self.esito.setText(self.t("errore_esecuzione", errore=errore))
+        self.esito.setStyleSheet("color:#a00")
+        if self.w.report is None:
+            try:
+                self.w.report = modulo_report.report_da_candidati(
+                    self.w.candidati, None,
+                    avvisi=list(self.w.elenco_csv.avvisi) if self.w.elenco_csv else [],
+                )
+                vuoto = not self.w.report.righe
+                self.bottone_export.setEnabled(not vuoto)
+                self.bottone_export_tutto.setEnabled(not vuoto)
+            except Exception:
+                pass          # nemmeno il report si può costruire: resta il messaggio
         self.completeChanged.emit()
 
     def _progresso(self, indice, totale, candidato):
@@ -1067,23 +1138,46 @@ class PaginaEsegui(PaginaBase):
     # -------------------------------------------------- export
 
     def esporta(self, solo_anomalie=True):
+        """Scrive il CSV del report. Un errore di scrittura si mostra, non si perde."""
         if self.w.report is None:
+            return
+        righe = self._righe_da_esportare(solo_anomalie)
+        if not righe:
+            QMessageBox.information(self, self.t("attenzione_titolo"), self.t("report_vuoto"))
             return
         intestazioni = (self.t("col_tipo_riga"), self.t("col_feature"), self.t("col_campo_foto"),
                         self.t("col_valore"), self.t("col_percorso_file"),
                         self.t("col_nome_allegato"), self.t("col_motivo"))
         percorso, _filtro = QFileDialog.getSaveFileName(
-            self, self.t("export_missing"), "report_allegati.csv", "CSV (*.csv)"
+            self, self.t("export_missing"), "report_allegati.csv", self._filtro_csv_export()
         )
         if not percorso:
             return
-        modulo_report.scrivi_report_csv(
-            percorso, self.w.report.righe, intestazioni=intestazioni,
-            traduttore=lambda codice: strings.tr(strings.TESTI_STATO.get(codice, "stato_ok"),
-                                                  self.w.lingua),
-            solo_anomalie=solo_anomalie,
-        )
+        try:
+            modulo_report.scrivi_report_csv(
+                percorso, righe, intestazioni=intestazioni,
+                traduttore=lambda codice: strings.tr(strings.TESTI_STATO.get(codice, "stato_ok"),
+                                                      self.w.lingua),
+                solo_anomalie=False,
+            )
+        except OSError as errore:
+            # Il messaggio coi conteggi finali resta dov'è: si aggiunge l'errore.
+            QMessageBox.critical(self, self.t("errore_titolo"),
+                                 self.t("errore_export", errore=errore))
+            return
         self.esito.setText(self.t("report_salvato", percorso=percorso))
+
+    def _righe_da_esportare(self, solo_anomalie):
+        """Le righe che finiscono nel CSV (per «esporta i mancanti/errori»).
+
+        La regola è quella del core (`STATI_ANOMALI`, più gli avvisi), applicata qui
+        perché è la UI a decidere *cosa* scrivere: la scrittura vera la fa
+        `scrivi_report_csv` sulle righe che le passiamo.
+        """
+        if not solo_anomalie:
+            return list(self.w.report.righe)
+        return [riga for riga in self.w.report.righe
+                if riga.tipo in modulo_report.STATI_ANOMALI + ("avviso",)]
 
     def isComplete(self):  # noqa: N802
         return self.w.eseguito

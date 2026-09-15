@@ -152,6 +152,7 @@ STRINGHE = {
                             "sulla cartella base. Controlla la cartella prima di eseguire.",
         "nessun_campo_trovato": "Nessun campo candidato: scegli a mano i campi al passo successivo.",
         "cartella_base_non_valida": "La cartella «{cartella}» non esiste o non è leggibile.",
+        "errore_scansione": "Errore imprevisto durante l'analisi dei campi: {errore}",
         # --- pagina campi
         "titolo_campi": "Quali campi sono campi foto",
         "testo_campi": "Spunta i campi del layer sorgente che contengono il file da allegare. "
@@ -185,6 +186,9 @@ STRINGHE = {
         "formula_non_valida": "Formula non valida: {errore}",
         "formula_prova": "Prova",
         "csv_file": "File CSV:",
+        "filtro_csv": "CSV (*.csv *.txt)",
+        "filtro_csv_export": "CSV (*.csv)",
+        "filtro_tutti_i_file": "Tutti i file (*)",
         "csv_chiave": "Colonna chiave da incrociare col layer:",
         "csv_col_file": "Colonna del file:",
         "csv_col_attname": "Colonna del nome allegato (facoltativa):",
@@ -254,6 +258,11 @@ STRINGHE = {
 
         "esito_scrittura": "Scrittura conclusa: {aggiunti} aggiunti, {duplicati} già presenti, "
                            "{mancanti} file non trovati, {saltati} saltati, {errori} errori.",
+        "esito_commit_fallito": "Commit non riuscito: nulla è stato scritto nel geodatabase.\n"
+                                "Dettaglio: {errore}",
+        "errore_esecuzione": "Errore imprevisto durante la scrittura: {errore}\n\n"
+                             "Il wizard è ancora aperto: correggi e riprova.",
+        "errore_export": "Report non salvato: {errore}",
         "annulla_zero_scritto": "Annullato prima di scrivere: nessuna modifica al geodatabase.",
         # --- pagina stile
         "titolo_stile": "Stile della tabella allegati",
@@ -388,6 +397,7 @@ STRINGHE = {
                             "Check the folder before running.",
         "nessun_campo_trovato": "No candidate field: choose the fields by hand in the next step.",
         "cartella_base_non_valida": "Folder “{cartella}” does not exist or is not readable.",
+        "errore_scansione": "Unexpected error while scanning the fields: {errore}",
         # --- field selection page
         "titolo_campi": "Which fields are photo fields",
         "testo_campi": "Tick the source-layer fields that hold the file to attach. "
@@ -420,6 +430,9 @@ STRINGHE = {
         "formula_non_valida": "Invalid formula: {errore}",
         "formula_prova": "Test",
         "csv_file": "CSV file:",
+        "filtro_csv": "CSV (*.csv *.txt)",
+        "filtro_csv_export": "CSV (*.csv)",
+        "filtro_tutti_i_file": "All files (*)",
         "csv_chiave": "Key column to join with the layer:",
         "csv_col_file": "File column:",
         "csv_col_attname": "Attachment name column (optional):",
@@ -488,6 +501,11 @@ STRINGHE = {
         "stile_salta": "Do not apply the style (you can load it later with “Load style”).",
         "esito_scrittura": "Write finished: {aggiunti} added, {duplicati} already there, "
                            "{mancanti} missing files, {saltati} skipped, {errori} errors.",
+        "esito_commit_fallito": "Commit failed: nothing was written to the geodatabase.\n"
+                                "Detail: {errore}",
+        "errore_esecuzione": "Unexpected error while writing: {errore}\n\n"
+                             "The wizard is still open: fix it and try again.",
+        "errore_export": "Report not saved: {errore}",
         "annulla_zero_scritto": "Cancelled before writing: no change to the geodatabase.",
         # --- style page
         "titolo_stile": "Attachment table style",
