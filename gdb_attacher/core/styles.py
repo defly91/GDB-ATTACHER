@@ -19,6 +19,14 @@ Verdetti tecnici già chiusi dal prototipo e recepiti nel QML incluso:
 
 Lo stile viene applicato **alla fine** della procedura (ticket 03) e **sovrascrive**
 lo stile esistente; il wizard lascia la possibilità di non applicarlo.
+
+``resources/stile_attach_variante_A.qml`` è il QML del prototipo scelto **con una sola
+differenza**: le due azioni leggono il **nome allegato** da
+``[% to_base64("ATT_NAME") %]`` + ``base64.b64decode(...)`` invece che da un literal
+Python, come deciso dal ticket 06 dopo la verifica 8/8 in QGIS 3.44.4 (nomi con apice,
+accenti e a capo). Tutto il resto del QML — alias, ValueMap su ``CONTENT_TYPE``,
+widget Binary, tab *Anteprima*/*Dati tecnici*, mapTip, colonna ``DATA`` nascosta — è
+identico al prototipo validato a headless.
 """
 
 from __future__ import annotations
