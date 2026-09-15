@@ -25,13 +25,13 @@ La strategia copre i primi due punti con i **fake** e delega il terzo a una **ch
 
 I marcatori sono dichiarati in `pyproject.toml` (`--strict-markers`): un test che usa un marcatore **non dichiarato** fallisce in raccolta, quindi non si inventano livelli a metà. Attenzione a non leggere quella regola come "nessun test senza livello": il marcatore è dichiarato a livello di file (`pytestmark`) e **non** è obbligatorio, quindi la suite del core (`gdb_attacher/tests/`) non lo porta e resta fuori da `-m unit`.
 
-Oggi la selezione dà questo (numeri verificati, `351` test in totale):
+Oggi la selezione dà questo (numeri verificati, `352` test in totale):
 
 ```bash
-pytest -q -m unit            # 190 test: logica pura + percorsi del wizard (velocissimo)
+pytest -q -m unit            # 191 test: logica pura + percorsi del wizard (velocissimo)
 pytest -q -m packaging       # 11 test: build dello zip e pacchetto
 pytest -q -m "not unit and not packaging"   # 150 test: suite del core in gdb_attacher/tests/
-pytest -q                    # 351 test, 0 saltati
+pytest -q                    # 352 test, 0 saltati
 ```
 
 I marcatori `richiede_qgis` e `richiede_gdb` **non hanno ancora test**: quei casi sono la checklist manuale più sotto (si scriveranno come test automatici quando ci sarà un ambiente con QGIS vero). La selezione `-m richiede_qgis` quindi non raccoglie nulla — serve a fissare dove andranno quei test.
@@ -87,7 +87,7 @@ Per simulare "manca la tabella allegati" o "il layer non è valido" non serve al
 3. `pytest -q`;
 4. lo zip del plugin: lo costruisce e controlla che dentro ci siano `metadata.txt` e non `tests/`, `docs/`, `.github/` (nel workflow il passo è condizionato all'esistenza di `gdb_attacher/`, che in questo ramo c'è).
 
-Copertura automatica attuale in questo ramo: **351 test verdi, 0 saltati** — 190 con marcatore `unit` (fake QGIS, contratto v1/v1-sul-plugin, prototipo 05, **wizard**), 11 `packaging` (build dello zip e pacchetto), 150 nella suite del core (`gdb_attacher/tests/`, senza marcatore). QGIS e GDAL non servono: i moduli `qgis.*` sono quelli finti.
+Copertura automatica attuale in questo ramo: **352 test verdi, 0 saltati** — 191 con marcatore `unit` (fake QGIS, contratto v1/v1-sul-plugin, prototipo 05, **wizard**), 11 `packaging` (build dello zip e pacchetto), 150 nella suite del core (`gdb_attacher/tests/`, senza marcatore). QGIS e GDAL non servono: i moduli `qgis.*` sono quelli finti.
 
 ### Cosa coprono i test del wizard
 
