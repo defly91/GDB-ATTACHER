@@ -15,10 +15,12 @@ Spec decisionale pronta per il plugin QGIS GDB-Attacher: wizard che seleziona un
 - [TOS e licenze FileGDB per il plugin](issues/01-tos-licenze-filegdb-plugin.md): nessuna violazione con solo GDAL OpenFileGDB, licenza GPLv2+, dipendenze dichiarate, niente binari.
 - [Wizard selezione layer e UX](issues/03-wizard-selezione-layer-ux.md): solo layer in progetto su FileGDB; verifica bloccante → discovery → campi → naming → esegui → stile; blocco duro sui casi anomali; preview a conteggi + esempi naming su 5 feature; backup aggirabile, transazione unica, report con export missing; QML auto-applicato; IT+EN; glossario in `CONTEXT.md`.
 - [Stile `_ATTACH` e anteprime altri formati](issues/04-stile-html-anteprime-altri-formati.md): variante A (anteprima in testa, HTML inline + mapTip); nel form non vale `[% %]` → bridge JS `expression.evaluate`; ExternalResource non applicabile al blob; PDF/TIFF/MP4 solo via azione *Apri*; nomi con apice → ticket 06.
+- [Auto-discovery campi foto](issues/05-auto-discovery-campi-foto.md): euristica a 4 segnali sui valori (ext%, esiste%, multi%, scarto guid/num/remoto) + nome campo; 4 livelli A/B/C/D; misurato 7/7 attesi e 0 falsi positivi con cartella base (6/7 senza); dettagli e tabella in `prototype/05-field-discovery/`.
 
 ## Not yet specified
 
 - Performance e batch: migliaia di foto, transazioni `edit()`, rollback, deduplica su `(REL_GLOBALID, ATT_NAME)`, resume dopo crash.
+- Discovery: dove si sceglie la cartella base nell'ordine del wizard e cosa mostrare quando non c'è ancora (emerso dal ticket 05: senza cartella base il livello A non esiste e i nomi senza estensione restano C).
 - Stile: QML di default versionato/incluso nel plugin (packaging, vedi ticket 07).
 - Formula di naming: sintassi (espressioni QGIS?), univocità, sanitizzazione caratteri, cosa fare con collisioni.
 - CSV join: chiave univoca (GLOBALID?), separatore/encoding, validazione path, preview prima dell'attach.

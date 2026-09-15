@@ -1,0 +1,7 @@
+# Fixture generate da esempi/genera_esempi.py (non vanno in git):
+# il GPKG non e' byte-riproducibile, la cartella foto e' composta da file finti.
+# misura_euristiche.py le rigenera da solo se mancano.
+esempi/foto/
+esempi/discovery_esempi.gpkg
+esempi/attesi.json
+__pycache__/
