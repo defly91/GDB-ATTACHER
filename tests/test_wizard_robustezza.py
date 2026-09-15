@@ -107,6 +107,10 @@ def test_commit_fallito_dice_che_non_si_e_scritto(monkeypatch, tmp_path):
                                              errore="database is locked")
     assert "nulla è stato scritto" in pagina.esito.text()
     assert "aggiunti" not in pagina.esito.text()
+    # Il passo non si dichiara «eseguito»: alla chiusura l'avviso «nessuna modifica
+    # al geodatabase» è di nuovo la verità.
+    assert wizard.eseguito is False
+    assert wizard.report is not None                   # il report resta esportabile
 
 
 def test_commit_fallito_riportato_dal_report(monkeypatch, tmp_path):
@@ -125,6 +129,20 @@ def test_commit_fallito_riportato_dal_report(monkeypatch, tmp_path):
 
     assert pagina.esito.text() == strings.tr("esito_commit_fallito", "it",
                                              errore="commit rifiutato da QGIS")
+
+
+def test_dopo_un_commit_fallito_chiudere_avvisa_che_non_si_e_scritto(monkeypatch, tmp_path):
+    wizard, _ = wizard_pronto(monkeypatch, tmp_path)
+    wizard.pagina_naming.aggiorna_anteprima()
+    monkeypatch.setattr(attach, "scrivi_allegati",
+                        lambda *a, **k: statistica_finta(aggiunti=1,
+                                                         errore_commit="database is locked"))
+    esegui_senza_backup(wizard)
+
+    wizard.reject()
+
+    assert ultimo_dialogo("information")["testo"] == strings.tr("annulla_zero_scritto", "it")
+    assert wizard.chiusura == "rifiutato"
 
 
 def test_scrittura_riuscita_mostra_i_numeri_del_report(monkeypatch, tmp_path):

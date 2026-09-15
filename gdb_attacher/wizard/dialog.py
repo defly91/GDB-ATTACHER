@@ -1088,15 +1088,16 @@ class PaginaEsegui(PaginaBase):
             self.w.candidati, statistica,
             avvisi=list(self.w.elenco_csv.avvisi) if self.w.elenco_csv else [],
         )
-        self.w.eseguito = True
+        errore_commit = self._errore_commit()
+        # Con il commit fallito nel geodatabase non è finito nulla: il wizard non si
+        # dichiara «eseguito», così anche l'avviso di chiusura resta vero.
+        self.w.eseguito = not errore_commit
 
         self.barra.setVisible(False)
         if statistica.annullata:
             self.esito.setText(self.t("esecuzione_annullata"))
             self.esito.setStyleSheet("color:#a60")
         else:
-            errore_commit = (getattr(self.w.report, "errore_commit", "")
-                             or getattr(statistica, "errore_commit", ""))
             if errore_commit:
                 # Il commit è andato male: quello che si vede in tabella non c'è. Dirlo
                 # chiaramente è più importante di un «aggiunti: N» che sarebbe falso.
@@ -1117,6 +1118,16 @@ class PaginaEsegui(PaginaBase):
         self.bottone_export.setEnabled(not vuoto)
         self.bottone_export_tutto.setEnabled(not vuoto)
         self.completeChanged.emit()
+
+    def _errore_commit(self):
+        """Dettaglio del commit fallito: dal report o dalla statistica, ``""`` se ok.
+
+        Il core può esporlo sull'una o sull'altra (`ReportFinale.errore_commit`,
+        `StatisticaScrittura.errore_commit`): qui si guarda in entrambi i posti e non
+        si dà mai per scritto quello che il commit non ha salvato.
+        """
+        return (getattr(self.w.report, "errore_commit", "")
+                or getattr(self.w.statistica, "errore_commit", "") or "")
 
     def _errore_imprevisto(self, errore):
         """Mostra un errore imprevisto e salva il salvabile (il report).
