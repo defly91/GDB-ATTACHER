@@ -897,6 +897,7 @@ class PaginaEsegui(PaginaBase):
         nota_report.setStyleSheet("color:#555")
         disposizione.addWidget(nota_report)
         self._annulla_richiesto = False
+        self._in_corso = False
 
     # -------------------------------------------------- preparazione
 
@@ -946,8 +947,29 @@ class PaginaEsegui(PaginaBase):
     def _aggiorna_bottone(self):
         self.bottone_esegui.setEnabled(
             self.conferma.isChecked() and not self.w.eseguito
+            and not self._in_corso
             and any(c.da_scrivere for c in self.w.candidati)
         )
+
+    def in_corso(self) -> bool:
+        """Vero mentre il batch sta scrivendo."""
+        return self._in_corso
+
+    def _imposta_in_corso(self, attivo: bool):
+        """Blocca i comandi che non hanno senso durante il batch.
+
+        Con i pulsanti attivi l'utente può chiudere il wizard a metà scrittura e
+        leggere «annulla = nulla è stato scritto» mentre il batch committa: qui
+        restano attivi solo «Annulla la scrittura» (e la barra di avanzamento).
+        """
+        self._in_corso = bool(attivo)
+        self.w.blocca_pulsanti(attivo)
+        for comando in (self.conferma, self.radio_backup, self.radio_senza_backup,
+                        self.bottone_cartella_backup):
+            comando.setEnabled(not attivo)
+        self.cartella_backup.setEnabled(not attivo and self.radio_backup.isChecked())
+        self.bottone_annulla.setEnabled(bool(attivo))
+        self._aggiorna_bottone()
 
     # -------------------------------------------------- esecuzione
 
@@ -984,8 +1006,7 @@ class PaginaEsegui(PaginaBase):
         self.barra.setVisible(True)
         self.barra.setRange(0, max(1, len(candidati)))
         self.barra.setValue(0)
-        self.bottone_annulla.setEnabled(True)
-        self.bottone_esegui.setEnabled(False)
+        self._imposta_in_corso(True)
         QApplication.setOverrideCursor(Qt.WaitCursor)
         try:
             # `chiavi_esistenti=None`: il core ricarica lui le chiavi dalla tabella
@@ -997,7 +1018,7 @@ class PaginaEsegui(PaginaBase):
             )
         finally:
             QApplication.restoreOverrideCursor()
-            self.bottone_annulla.setEnabled(False)
+            self._imposta_in_corso(False)
             # Il batch ha scritto (o è stato annullato): le chiavi in cache non
             # valgono più, il prossimo giro deve rileggere la tabella.
             self.w.pagina_naming.invalida_cache_chiavi()
@@ -1171,6 +1192,24 @@ class WizardAllegati(QWizard):
     def t(self, chiave, **valori):
         return strings.tr(chiave, self.lingua, **valori)
 
+    def blocca_pulsanti(self, bloccati: bool):
+        """Blocca/riabilita i pulsanti standard del wizard (durante il batch).
+
+        `Avanti`/`Indietro`/`Chiudi` sono comandi del wizard, non della pagina:
+        mentre si scrive nessuno di loro è valido (l'unico è «Annulla la
+        scrittura»), altrimenti si uscirebbe a metà transazione.
+        """
+        self._pulsanti_bloccati = bool(bloccati)
+        for identificativo in (QWizard.BackButton, QWizard.NextButton,
+                               QWizard.CancelButton, QWizard.FinishButton):
+            pulsante = self.button(identificativo)
+            if pulsante is not None:
+                pulsante.setEnabled(not bloccati)
+
+    def pulsanti_bloccati(self) -> bool:
+        """Vero mentre i pulsanti del wizard sono bloccati dal batch."""
+        return bool(getattr(self, "_pulsanti_bloccati", False))
+
     def layer_filegdb(self):
         """Solo i layer vettoriali già in progetto che stanno su un FileGDB (ticket 03).
 
@@ -1192,7 +1231,14 @@ class WizardAllegati(QWizard):
     # -------------------------------------------------- chiusura
 
     def accept(self):
-        """Chiude il wizard applicando lo stile se richiesto (ticket 03: stile alla fine)."""
+        """Chiude il wizard applicando lo stile se richiesto (ticket 03: stile alla fine).
+
+        A metà scrittura `Fine` non è un'uscita: diventa la richiesta di annullo
+        (la transazione va in rollback) e la finestra resta aperta.
+        """
+        if self.pagina_esegui.in_corso():
+            self.pagina_esegui.annulla_esecuzione()
+            return
         if self.report is not None and self.report.annullata:
             QMessageBox.information(self, self.t("attenzione_titolo"), self.t("esecuzione_annullata"))
         if self.pagina_stile.stile_richiesto():
@@ -1203,7 +1249,16 @@ class WizardAllegati(QWizard):
         super().accept()
 
     def reject(self):
-        """Annulla = esci senza aver scritto nulla (ticket 03)."""
+        """Annulla = esci senza aver scritto nulla (ticket 03).
+
+        Se il batch sta scrivendo, chiudere il wizard (o «Indietro»/«Annulla») **non**
+        è un'uscita: diventa la richiesta di annullo — la transazione in corso viene
+        annullata — e la finestra resta aperta finché la scrittura non si ferma.
+        Il messaggio «nessuna modifica al geodatabase» si mostra solo quando è vero.
+        """
+        if self.pagina_esegui.in_corso():
+            self.pagina_esegui.annulla_esecuzione()
+            return
         if not self.eseguito and self.candidati:
             QMessageBox.information(self, self.t("attenzione_titolo"), self.t("annulla_zero_scritto"))
         super().reject()

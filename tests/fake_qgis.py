@@ -1979,7 +1979,9 @@ class QWizard(QWidget):
     def __init__(self, parent=None, *args, **kwargs):
         super().__init__(parent)
         self.pagine = []
-        self.esito = None                 # "accettato" / "rifiutato" dopo accept/reject
+        # `chiusura` e non `esito`: il plugin usa `esito` per la verifica bloccante,
+        # un nome in comune farebbe sovrascrivere lo stato del wizard.
+        self.chiusura = None               # "accettato" / "rifiutato" dopo accept/reject
         self.accepted = _SegnaleWidget(self)
         self.rejected = _SegnaleWidget(self)
         self.finished = _SegnaleWidget(self)
@@ -2079,17 +2081,17 @@ class QWizard(QWidget):
     def setPixmap(self, ruolo, pixmap):
         self._pixmap = (ruolo, pixmap)
 
-    # -- esito --------------------------------------------------------------
+    # -- come è stata chiusa ------------------------------------------------
     def accept(self):
-        self.esito = "accettato"
+        self.chiusura = "accettato"
         self.accepted.emit()
 
     def reject(self):
-        self.esito = "rifiutato"
+        self.chiusura = "rifiutato"
         self.rejected.emit()
 
     def done(self, codice):
-        self.esito = "accettato" if codice else "rifiutato"
+        self.chiusura = "accettato" if codice else "rifiutato"
 
     def exec_(self):
         return 0
@@ -2100,7 +2102,7 @@ class QWizard(QWidget):
         pass
 
     def __repr__(self):
-        return "QWizard(%d pagine, esito=%r)" % (len(self.pagine), self.esito)
+        return "QWizard(%d pagine, chiusura=%r)" % (len(self.pagine), self.chiusura)
 
 
 # ---------------------------------------------------------------------------
