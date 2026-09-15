@@ -754,7 +754,8 @@ class PaginaNaming(PaginaBase):
             self.t("atto_totale_duplicati", n=conteggi["duplicato"]),
             self.t("totale_missing", n=conteggi["missing"] + conteggi["file_ignoto"]),
             self.t("totale_collisioni", n=conteggi["collisione"]),
-            self.t("totale_saltati", n=conteggi["saltati"] + conteggi["salta"]),
+            # `saltati` è già la somma del core (vuoto + salta + …): non risommarlo.
+            self.t("totale_saltati", n=conteggi["saltati"]),
         ]))
         per_campo = " · ".join(f"{campo}: {n}" for campo, n in anteprima.conteggi_per_campo.items())
         self.per_campo.setText(f"{self.t('conteggi_per_campo')} {per_campo or '—'}   "
@@ -870,7 +871,8 @@ class PaginaEsegui(PaginaBase):
             self.t("atto_totale_duplicati", n=conteggi["duplicato"]),
             self.t("totale_missing", n=conteggi["missing"] + conteggi["file_ignoto"]),
             self.t("totale_collisioni", n=conteggi["collisione"]),
-            self.t("totale_saltati", n=conteggi["saltati"] + conteggi["salta"]),
+            # Stessa regola dell'anteprima: `saltati` non si risomma (vedi passo 5).
+            self.t("totale_saltati", n=conteggi["saltati"]),
         ]))
         self.contatori.setStyleSheet("color:#555")
         self.cartella_backup.setText(
