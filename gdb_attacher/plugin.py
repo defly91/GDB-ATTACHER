@@ -111,6 +111,5 @@ class GDBAttacherPlugin:
         QMessageBox.information(
             self.iface.mainWindow(),
             strings.tr("info_titolo"),
-            strings.tr("azione_wizard_desc")
-            + "\n\nGPLv2+ · https://github.com/defly91/GDB-ATTACHER",
+            strings.tr("info_testo"),
         )

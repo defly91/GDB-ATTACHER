@@ -231,6 +231,26 @@ STRINGHE = {
         "conferma_esecuzione": "Confermi la scrittura sul geodatabase?",
         "esegui": "Esegui",
         "esecuzione_in_corso": "Scrittura in corso…",
+        "atto_totale_duplicati": "Già presenti (saltati): {n}",
+        "nota_dedup": "Prima di scrivere si controlla la coppia (REL_GLOBALID, ATT_NAME): "
+                      "un allegato già presente non viene riscritto.",
+        "nota_galleria": "Galleria: più campi foto spuntati o valori multipli nello stesso campo "
+                         "producono più righe di allegato per la stessa feature, in un solo giro.",
+        "info_testo": "Wizard per allegare foto e file alle feature di un FileGDB Esri.\n\n"
+                      "• verifica bloccante di FileGDB, GlobalID e tabella allegati (il plugin non la crea mai)\n"
+                      "• discovery automatica dei campi foto, cartella base, anteprima con conteggi\n"
+                      "• nome allegato: originale, formula QGIS per-feature o elenco file da CSV\n"
+                      "• deduplica su (REL_GLOBALID, ATT_NAME), batch in una transazione con backup opzionale\n"
+                      "• report finale esportabile in CSV, stile «variante A» applicato dopo la scrittura\n\n"
+                      "Fuori perimetro in v1: QField (nessuna sincronizzazione sul campo, né raccolta offline).\n\n"
+                      "GPLv2+ · https://github.com/defly91/GDB-ATTACHER",
+        "esecuzione": "Esegui",
+        "esecuzione_annulla": "Annulla la scrittura",
+        "esecuzione_annullata": "Scrittura annullata: la transazione è stata annullata, "
+                                "il geodatabase è rimasto com'era.",
+        "applica_stile_checkbox": "Applica lo stile «variante A» alla tabella allegati",
+        "stile_salta": "Non applicare lo stile (potrai applicarlo dopo con «Carica stile»).",
+
         "esito_scrittura": "Scrittura conclusa: {aggiunti} aggiunti, {duplicati} duplicati, "
                            "{saltati} saltati, {errori} errori.",
         "annulla_zero_scritto": "Annullato prima di scrivere: nessuna modifica al geodatabase.",
@@ -437,6 +457,25 @@ STRINGHE = {
         "conferma_esecuzione": "Confirm the write on the geodatabase?",
         "esegui": "Run",
         "esecuzione_in_corso": "Writing…",
+        "atto_totale_duplicati": "Already there (skipped): {n}",
+        "nota_dedup": "Before writing, the (REL_GLOBALID, ATT_NAME) pair is checked: an attachment already "
+                      "present is not written again.",
+        "nota_galleria": "Gallery: more ticked photo fields or multi-value fields produce several attachment "
+                         "rows for the same feature, in one single pass.",
+        "info_testo": "Wizard to attach photos and files to Esri FileGDB features.\n\n"
+                      "• blocking checks on FileGDB, GlobalID and the attachment table (the plugin never creates it)\n"
+                      "• automatic photo-field discovery, base folder, preview with counts\n"
+                      "• attachment name: original, per-feature QGIS formula or file list from CSV\n"
+                      "• dedup on (REL_GLOBALID, ATT_NAME), batch in a single transaction with optional backup\n"
+                      "• final report exportable to CSV, “variant A” style applied after the write\n\n"
+                      "Out of scope in v1: QField (no field sync, no offline collection).\n\n"
+                      "GPLv2+ · https://github.com/defly91/GDB-ATTACHER",
+        "esecuzione": "Run",
+        "esecuzione_annulla": "Cancel the write",
+        "esecuzione_annullata": "Write cancelled: the transaction was rolled back, "
+                                "the geodatabase is unchanged.",
+        "applica_stile_checkbox": "Apply the “variant A” style to the attachment table",
+        "stile_salta": "Do not apply the style (you can load it later with “Load style”).",
         "esito_scrittura": "Write finished: {aggiunti} added, {duplicati} duplicates, "
                            "{saltati} skipped, {errori} errors.",
         "annulla_zero_scritto": "Cancelled before writing: no change to the geodatabase.",
@@ -491,10 +530,13 @@ def _da_impostazioni() -> str:
 
 
 def lingua_corrente() -> str:
-    """Lingua attiva: impostazione del plugin, altrimenti la lingua di sistema.
+    """Lingua attiva.
 
-    La scelta esplicita dell'utente vince sempre; in mancanza si prova a indovinare
-    dall'ambiente (``LANG`` o locale Qt) e si ricade sull'italiano.
+    Ordine di priorità (la scelta esplicita dell'utente vince sempre):
+    1. lingua scelta dal menu del plugin (``QSettings``);
+    2. lingua di QGIS (``locale/userLocale``), **predefinita italiano**;
+    3. variabili d'ambiente ``LANG``/``LC_ALL``;
+    4. italiano.
     """
     import os
 
@@ -505,6 +547,17 @@ def lingua_corrente() -> str:
             return str(impostazione.value(CHIAVE_IMPOSTAZIONE_LINGUA)).lower()
     except Exception:
         pass
+
+    # Lingua di QGIS (es. "it_IT", "en_US"): vale solo se la conosciamo.
+    try:
+        from qgis.core import QgsSettings
+
+        locale_qgis = str(QgsSettings().value("locale/userLocale") or "").lower()
+        if len(locale_qgis) >= 2 and locale_qgis[:2] in LINGUE:
+            return locale_qgis[:2]
+    except Exception:
+        pass
+
     ambiente = (os.environ.get("LANG") or os.environ.get("LC_ALL") or "").lower()
     if ambiente.startswith("en"):
         return LINGUA_EN
