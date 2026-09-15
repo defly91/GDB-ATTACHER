@@ -199,8 +199,13 @@ class IndiceFile:
 
     @classmethod
     def per_cartella(cls, cartella_base: str, estensioni=None) -> "IndiceFile":
-        """Indice in cache per cartella (una scansione per sessione, non una per campo)."""
-        chiave = (os.path.normpath(str(cartella_base)).lower(), tuple(estensioni or ESTENSIONI))
+        """Indice in cache per cartella (una scansione per sessione, non una per campo).
+
+        La chiave **non** viene abbassata di caso: su filesystem case-sensitive ``/X/Foto`` e
+        ``/x/foto`` sono due cartelle diverse e condividevano l'indice (percorsi presi dalla
+        cartella sbagliata). Su filesystem case-insensitive si paga solo una scansione in più.
+        """
+        chiave = (os.path.normpath(str(cartella_base)), tuple(estensioni or ESTENSIONI))
         if chiave not in cls._cache:
             cls._cache[chiave] = cls(cartella_base, estensioni)
         return cls._cache[chiave]
