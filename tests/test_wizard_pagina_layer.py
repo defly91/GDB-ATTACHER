@@ -26,6 +26,79 @@ def sorgente_finta(nome):
 
 
 # ---------------------------------------------------------------------------
+# Difetto: tornando indietro, il combo perdeva la scelta
+
+def due_sorgenti(monkeypatch):
+    """Progetto con due layer FileGDB: `fotorilievo` e `fotorilievo_bis`."""
+    secondo = sorgente_finta("fotorilievo_bis")
+    progetto_con(extra=[secondo])
+    return apri_wizard(monkeypatch), secondo
+
+
+def test_tornando_indietro_resta_scelto_il_layer_di_prima(monkeypatch):
+    """Il difetto: `initializePage()` ripopolava il combo e la scelta cadeva sul
+    PRIMO layer della lista, quindi si proseguiva scrivendo sul GDB sbagliato."""
+    wizard, secondo = due_sorgenti(monkeypatch)
+    pagina = wizard.pagina_layer
+    pagina.initializePage()
+    pagina.combo.setCurrentIndex(1)
+    assert pagina.validatePage() is True
+    assert wizard.layer_sorgente is secondo
+
+    pagina.initializePage()          # l'utente torna indietro dal passo 2
+    assert pagina.combo.currentData() == secondo.id()
+    assert pagina.layer_scelto() is secondo
+    assert wizard.layer_sorgente is secondo
+
+
+def test_la_scelta_non_cambia_con_aggiorna(monkeypatch):
+    wizard, secondo = due_sorgenti(monkeypatch)
+    pagina = wizard.pagina_layer
+    pagina.initializePage()
+    pagina.combo.setCurrentIndex(1)
+    assert pagina.validatePage() is True
+
+    pagina.bottone_aggiorna.click()          # «Aggiorna» non azzera la scelta
+    assert pagina.layer_scelto() is secondo
+
+
+def test_validate_page_registra_sempre_il_layer_mostrato(monkeypatch):
+    """La scrittura va sul layer che l'utente *vede* selezionato."""
+    wizard, secondo = due_sorgenti(monkeypatch)
+    pagina = wizard.pagina_layer
+    pagina.initializePage()
+    primo = pagina.layer_scelto()
+    assert primo is not secondo
+    assert pagina.validatePage() is True
+    assert wizard.layer_sorgente is primo
+
+    pagina.combo.setCurrentIndex(1)
+    assert pagina.validatePage() is True
+    assert wizard.layer_sorgente is secondo
+
+
+def test_senza_layer_filegdb_il_passo_non_e_completo(monkeypatch):
+    progetto_con(layer_sorgente=False, layer_allegati=False,
+                 extra=[crea_layer_sorgente(nome="shape", source="/tmp/qualsiasi.shp")])
+    wizard = apri_wizard(monkeypatch)
+    pagina = wizard.pagina_layer
+    pagina.initializePage()
+    assert pagina.combo.count() == 0
+    assert pagina.etichetta_vuoto.isVisible() is True
+    assert pagina.isComplete() is False
+    assert pagina.validatePage() is False
+    assert wizard.layer_sorgente is None
+
+
+def test_l_origine_mostrata_e_quella_del_layer_scelto(monkeypatch):
+    wizard, secondo = due_sorgenti(monkeypatch)
+    pagina = wizard.pagina_layer
+    pagina.initializePage()
+    pagina.combo.setCurrentIndex(1)
+    assert secondo.source() in pagina.etichetta_origine.text()
+
+
+# ---------------------------------------------------------------------------
 # Difetto: la tabella allegati compariva fra i layer sorgente
 
 def test_la_tabella_allegati_non_compare_fra_i_layer_sorgente(monkeypatch):

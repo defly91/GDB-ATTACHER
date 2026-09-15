@@ -127,14 +127,51 @@ class PaginaLayer(PaginaBase):
         disposizione.addStretch(1)
 
     def ricarica(self):
-        """Ripopola l'elenco con i soli layer vettoriali su FileGDB."""
-        self.combo.clear()
-        for layer in self.w.layer_filegdb():
-            self.combo.addItem(f"{layer.name()}  —  {os.path.basename(attach.percorso_gdb(layer.source()) or layer.source())}",
-                               layer.id())
+        """Ripopola l'elenco con i soli layer vettoriali su FileGDB.
+
+        La scelta non si perde: tornando indietro dal passo 2 (o premendo
+        «Aggiorna») il combo si riempie di nuovo ma resta selezionato lo stesso
+        layer. Senza questo, la scelta cadeva sul primo della lista e si
+        proseguiva scrivendo su un altro GDB.
+        """
+        scelto = self._id_da_riselezionare()
+        self.combo.blockSignals(True)
+        try:
+            self.combo.clear()
+            for layer in self.w.layer_filegdb():
+                self.combo.addItem(
+                    f"{_nome(layer)}  —  "
+                    f"{os.path.basename(attach.percorso_gdb(layer.source()) or layer.source())}",
+                    layer.id(),
+                )
+            indice = self.combo.findData(scelto) if scelto else -1
+            if indice < 0 and self.combo.count():
+                indice = 0
+            self.combo.setCurrentIndex(indice)
+        finally:
+            self.combo.blockSignals(False)
         self.etichetta_vuoto.setVisible(self.combo.count() == 0)
         self.bottone_aggiorna.setEnabled(True)
         self._aggiorna_origine()
+        self.completeChanged.emit()
+
+    def _id_da_riselezionare(self):
+        """Id del layer da riselezionare dopo il ripopolamento.
+
+        Prima la scelta corrente del combo, poi il layer su cui il wizard sta
+        lavorando: la selezione non deve mai ``cadere`` su un altro layer.
+        """
+        if self.combo.count():
+            corrente = self.combo.currentData()
+            if corrente:
+                return corrente
+        layer = getattr(self.w, "layer_sorgente", None)
+        if layer is not None:
+            try:
+                return layer.id()
+            except Exception:
+                return None
+        return None
 
     def initializePage(self):  # noqa: N802
         self.ricarica()
