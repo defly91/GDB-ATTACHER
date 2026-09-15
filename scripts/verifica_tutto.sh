@@ -77,7 +77,7 @@ elif ! docker image inspect "$IMMAGINE_QGIS4" >/dev/null 2>&1; then
 elif docker run --rm --memory=1500m -e QT_QPA_PLATFORM=offscreen -e REPO=/repo \
       -e PYTHONPATH=/repo:/usr/share/qgis/python --entrypoint python3 \
       -v "$RADICE":/repo:ro "$IMMAGINE_QGIS4" /repo/scripts/e2e_filegdb.py; then
-  registra "e2e" "OK" "11 controlli su 11"
+  registra "e2e" "OK" "12 controlli su 12"
 else
   registra "e2e" "FALLITO" "vedi output sopra (servono GDAL >= 3.6 e driver OpenFileGDB scrivibile)"
 fi

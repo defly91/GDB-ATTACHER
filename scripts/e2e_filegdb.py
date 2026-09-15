@@ -237,6 +237,27 @@ def main():
                  and len(lette3) == 1 and lette3[0]["DATA"] == contenuto,
                  f"annullata={statistica3.annullata} aggiunti={statistica3.aggiunti} "
                  f"righe={len(lette3)}")
+
+        # 5. collisione di nome nello stesso lotto: l'allegato rinominato DEVE essere scritto.
+        #    Era il difetto più grave della revisione: `da_scrivere` accettava solo lo stato
+        #    "ok", quindi il secondo file spariva e il report lo contava come aggiunto.
+        allegati.reload()
+        righe3 = [naming.RigaSorgente(id_parent=GUID_2, campo_foto="FOTO",
+                                      valore="foto d'interno.jpg;foto d'interno.jpg",
+                                      indice_feature=1)]
+        candidati4 = naming.risolvi_collisioni(
+            naming.candidati_da_campi(righe3, risolutore, naming.MODALITA_ORIGINALE),
+            esistenti=attach.carica_chiavi_esistenti(allegati),
+        )
+        statistica4 = attach.scrivi_allegati(allegati, candidati4)
+        lette4 = conta_allegati(percorso_gdb)
+        # Solo le righe della seconda feature: la tabella contiene già l'allegato di GUID_1.
+        rel_2 = "{" + GUID_2 + "}"
+        nomi4 = sorted(r["ATT_NAME"] for r in lette4 if r["REL_GLOBALID"] == rel_2)
+        registra("collisione nel lotto: entrambi gli allegati finiscono nel GDB",
+                 statistica4.aggiunti == 2
+                 and nomi4 == ["foto d'interno.jpg", "foto d'interno_2.jpg"],
+                 f"aggiunti={statistica4.aggiunti} nomi={nomi4}")
         return 0
     finally:
         shutil.rmtree(cartella, ignore_errors=True)
