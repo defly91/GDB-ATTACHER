@@ -499,9 +499,10 @@ def scrivi_allegati(layer_allegati, candidati, campi=None, chiavi_esistenti=None
                 nome_allegato = getattr(candidato, "nome_allegato", "") or ""
                 percorso = getattr(candidato, "percorso_file", "") or ""
                 # Difesa in profondità: il chiamante decide cosa passare, ma uno stato non
-                # scrivibile (duplicato, mancante, errore, salta) qui non entra mai.
+                # scrivibile (duplicato, mancante, errore, salta) qui non entra mai. Non si
+                # incrementa `saltati`: quello stato è già contato dal report sui candidati,
+                # e sommarlo qui lo conterebbe due volte.
                 if getattr(candidato, "stato", "ok") not in STATI_SCRIVIBILI:
-                    statistica.saltati += 1
                     continue
                 # Il candidato porta il GLOBALID grezzo della feature in ``id_parent``
                 # (``rel_globalid`` esiste per compatibilità con chiamanti esterni).

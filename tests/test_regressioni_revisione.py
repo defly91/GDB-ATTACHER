@@ -372,3 +372,47 @@ def test_un_nome_presente_in_una_sola_cartella_si_risolve(tmp_path):
 
     assert indice.risolvi("SS_0009.jpg").endswith("SS_0009.jpg")
     assert indice.risolvi("SS_0009").endswith("SS_0009.jpg")     # senza estensione
+
+
+def test_i_candidati_non_scrivibili_non_vengono_contati_due_volte(cartella_foto):
+    """Difetto: la difesa in profondità del writer sommava `saltati` per i candidati già
+    marcati "duplicato" dal pianificatore, che il report conta già: il totale dei saltati
+    risultava gonfiato rispetto all'anteprima."""
+    layer = crea_layer_attach()
+    pianificati = naming.risolvi_collisioni(candidati("SS_0001.jpg", cartella_foto))
+    # Secondo giro con lo stesso allegato già presente: diventa "duplicato" in pianificazione.
+    gia_presenti = attach.carica_chiavi_esistenti(layer)
+    statistica_prima = attach.scrivi_allegati(layer, pianificati)
+    pianificati_2 = naming.risolvi_collisioni(
+        candidati("SS_0001.jpg", cartella_foto), esistenti=gia_presenti
+    )
+    statistica = attach.scrivi_allegati(layer, pianificati_2)
+
+    assert statistica_prima.aggiunti == 1
+    assert statistica.aggiunti == 0 and statistica.saltati == 0
+    finale = report.report_da_candidati(pianificati_2, statistica)
+    assert finale.duplicati == 1
+    assert finale.saltati == 0
+
+
+def test_la_cache_dell_indice_distingue_cartelle_con_case_diverso(tmp_path):
+    """Difetto: la chiave della cache era abbassata di caso, quindi su filesystem
+    case-sensitive `/X/Foto` e `/x/foto` condividevano l'indice sbagliato."""
+    from gdb_attacher.core import discovery
+
+    maiuscola = tmp_path / "Foto"
+    minuscola = tmp_path / "foto"
+    maiuscola.mkdir()
+    minuscola.mkdir()
+    (maiuscola / "A.jpg").write_bytes(b"x")
+    (minuscola / "B.jpg").write_bytes(b"x")
+
+    discovery.IndiceFile.pulisci_cache()
+    indice_maiuscola = discovery.IndiceFile.per_cartella(str(maiuscola))
+    indice_minuscola = discovery.IndiceFile.per_cartella(str(minuscola))
+
+    if os.path.normcase("A") == os.path.normcase("a"):
+        pytest.skip("filesystem case-insensitive: le due cartelle sono la stessa")
+    assert indice_maiuscola is not indice_minuscola
+    assert indice_maiuscola.risolvi("A.jpg").endswith("A.jpg")
+    assert indice_minuscola.risolvi("B.jpg").endswith("B.jpg")
