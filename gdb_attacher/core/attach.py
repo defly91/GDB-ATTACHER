@@ -449,7 +449,11 @@ def scrivi_allegati(layer_allegati, candidati, campi=None, chiavi_esistenti=None
 
                 nome_allegato = getattr(candidato, "nome_allegato", "") or ""
                 percorso = getattr(candidato, "percorso_file", "") or ""
-                rel_globalid = guid_con_graffe(getattr(candidato, "rel_globalid", ""))
+                # Il candidato porta il GLOBALID grezzo della feature in ``id_parent``
+                # (``rel_globalid`` esiste per compatibilità con chiamanti esterni).
+                guid_parent = (getattr(candidato, "rel_globalid", "")
+                               or getattr(candidato, "id_parent", ""))
+                rel_globalid = guid_con_graffe(guid_parent)
 
                 if not rel_globalid:
                     statistica.saltati += 1
