@@ -60,14 +60,16 @@ docker run --rm --memory=1500m -e QT_QPA_PLATFORM=offscreen \
   /repo/scripts/e2e_filegdb.py
 ```
 
-Copre (esito registrato: **11/11**):
+Copre (esito registrato: **12/12**):
 
 - la verifica del plugin accetta un FileGDB con `GLOBALID` e tabella `__ATTACH` con i 6 campi;
 - la scrittura produce una riga valida: `ATT_NAME` verbatim (apice e spazi), `CONTENT_TYPE`
   dedotto dall'estensione, `DATA_SIZE` = dimensione reale, blob byte-identico al file,
   `REL_GLOBALID` maiuscolo e con graffe, `GLOBALID` maiuscolo e senza graffe;
 - rilanciare lo stesso lavoro non duplica (deduplica idempotente, 1 "già presente");
-- annullare durante il batch non lascia scritture parziali (`annullata=True`, 0 aggiunti).
+- annullare durante il batch non lascia scritture parziali (`annullata=True`, 0 aggiunti);
+- due file con lo stesso nome nello stesso lotto finiscono **entrambi** nel GDB
+  (`foto.jpg` e `foto_2.jpg`): era il difetto che faceva sparire la seconda foto.
 
 **Trappola verificata**: il driver OpenFileGDB restituisce i campi binari da `GetField` come
 **testo esadecimale** (1024 byte → 2048 caratteri). Un blob perfetto sembra quindi raddoppiato:
