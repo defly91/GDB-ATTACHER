@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- GDB-Attacher — icona segnaposto del wizard (GPLv2+).
+     Per ora non è referenziata da nessun widget: sta qui per la fase di
+     rifinitura grafica, senza cambiare il codice. -->
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+  <title>GDB-Attacher — wizard</title>
+  <rect x="2" y="4" width="20" height="16" rx="2" fill="none" stroke="#2b2b2b" stroke-width="1.6"/>
+  <path d="M6 4v16" stroke="#2b2b2b" stroke-width="1.4"/>
+  <path d="M9 9h10M9 12h10M9 15h6" stroke="#8aa62f" stroke-width="1.5" stroke-linecap="round"/>
+</svg>
