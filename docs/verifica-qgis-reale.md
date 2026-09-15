@@ -1,5 +1,13 @@
 # Verifica con un QGIS reale (container, headless)
 
+Per lanciare tutto in un colpo solo (suite veloce + QGIS 3.x + end-to-end):
+
+```bash
+scripts/verifica_tutto.sh
+```
+
+I paragrafi seguenti spiegano i singoli pezzi, se serve eseguirne uno solo.
+
 I test di `tests/` e `gdb_attacher/tests/` girano con un **finto QGIS**: verificano la logica, non le
 API. Questa procedura copre il pezzo che i finti non possono dare — importazione contro le API vere,
 caricamento del QML di stile, valutazione delle formule con `QgsExpression` e apertura del wizard —
