@@ -1061,10 +1061,18 @@ class WizardAllegati(QWizard):
         return strings.tr(chiave, self.lingua, **valori)
 
     def layer_filegdb(self):
-        """Solo i layer vettoriali già in progetto che stanno su un FileGDB (ticket 03)."""
+        """Solo i layer vettoriali già in progetto che stanno su un FileGDB (ticket 03).
+
+        La tabella allegati ``<layer>__ATTACH`` **non** è un layer sorgente: se la
+        si scegliesse, il wizard cercherebbe ``<layer>__ATTACH__ATTACH`` e
+        bloccherebbe con un messaggio incomprensibile. Si esclude qui, una volta
+        sola, con lo stesso suffisso che usa il core.
+        """
         trovati = []
         for layer in self.progetto.mapLayers().values():
             if not _e_vettoriale(layer):
+                continue
+            if _e_tabella_allegati(_nome(layer)):
                 continue
             if attach.sembra_filegdb(layer.source()):
                 trovati.append(layer)
@@ -1091,6 +1099,24 @@ class WizardAllegati(QWizard):
 
 
 # ---------------------------------------------------------------- helper
+
+
+def _nome(layer) -> str:
+    """Nome del layer, senza far esplodere il wizard se il layer è strano."""
+    try:
+        return str(layer.name())
+    except Exception:
+        return ""
+
+
+def _e_tabella_allegati(nome: str) -> bool:
+    """Vero se il nome del layer è quello di una tabella allegati (``...__ATTACH``).
+
+    Il confronto è case-insensitive: il suffisso lo dichiara il core
+    (``attach.SUFFISSO_TABELLA_ALLEGATI``), la maiuscola la decide ArcGIS.
+    """
+    suffisso = str(attach.SUFFISSO_TABELLA_ALLEGATI or "").upper()
+    return bool(suffisso) and str(nome or "").upper().endswith(suffisso)
 
 
 def _e_vettoriale(layer) -> bool:
