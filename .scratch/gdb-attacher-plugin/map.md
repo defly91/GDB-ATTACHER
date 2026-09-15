@@ -17,15 +17,14 @@ Spec decisionale pronta per il plugin QGIS GDB-Attacher: wizard che seleziona un
 - [Stile `_ATTACH` e anteprime altri formati](issues/04-stile-html-anteprime-altri-formati.md): variante A (anteprima in testa, HTML inline + mapTip); nel form non vale `[% %]` → bridge JS `expression.evaluate`; ExternalResource non applicabile al blob; PDF/TIFF/MP4 solo via azione *Apri*; nomi con apice → ticket 06.
 - [Auto-discovery campi foto](issues/05-auto-discovery-campi-foto.md): euristica a 4 segnali sui valori (ext%, esiste%, multi%, scarto guid/num/remoto) + nome campo; 4 livelli A/B/C/D; misurato 7/7 attesi e 0 falsi positivi con cartella base (6/7 senza); dettagli e tabella in `prototype/05-field-discovery/`.
 - [Naming: nome originale vs formula vs CSV](issues/06-naming-formula-vs-originale-csv.md): il file resta risolto da campo foto + cartella base, la modalità decide solo il nome allegato; tre modalità esclusive (originale default / formula QGIS per-feature con `@original_name`/`@stem`/`@ext`/`@index` / CSV fonte dell'elenco file su chiave default `GLOBALID`); multi-valore split `;`/`|`/a capo; `ATT_NAME` verbatim (nessuna sanitizzazione, apice risolto nell'azione via `to_base64`); collisioni con suffisso `_2`; nomi vuoti → salta e prosegue; preview 5 feature campo → file → nome con conteggi per campo.
+- [Perimetro v1 e altre idee](issues/07-perimetro-v1-e-altre-idee.md): v1 include deduplica `(REL_GLOBALID, ATT_NAME)`, export CSV dei mancanti/errori, batch con barra di avanzamento annullabile, i18n IT/EN, galleria multi-foto per feature e QML variante A incluso e applicato in automatico; pubblicazione sul repo QGIS **dopo** i test su GDB reale; QField rimandato (fog).
 
 ## Not yet specified
 
-- Performance e batch: migliaia di foto, transazioni `edit()`, rollback, deduplica su `(REL_GLOBALID, ATT_NAME)`, resume dopo crash.
 - Discovery: dove si sceglie la cartella base nell'ordine del wizard e cosa mostrare quando non c'è ancora (emerso dal ticket 05, non chiuso dal 06: senza cartella base il livello A non esiste e i nomi senza estensione restano C).
-- Stile: QML di default versionato/incluso nel plugin (packaging, vedi ticket 07).
 - Naming: vincoli `ATT_NAME` lato ArcGIS (lunghezza massima, unicità per feature, caratteri) mai verificati — il GDB di test è una tabella fantasma GDAL; da riconfermare su un `__ATTACH` creato da ArcGIS Pro.
-- Altre idee da valutare: galleria multi-foto, supporto QField, test su GDB campioni, i18n IT/EN, pubblicazione su repo ufficiale QGIS, licenza plugin (GPL2).
-- Strategia test senza GDB reale: GDB sintetico minimo, fixture, CI.
+- Strategia test senza GDB reale: fake QGIS + pytest + CI in corso (worktree `feat/v1-packaging-ci`); resta da validare su GDB campione dell'utente.
+- QField: supporto campo da tablet/telefono, da valutare dopo la v1.
 
 ## Out of scope
 
