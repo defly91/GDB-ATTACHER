@@ -894,6 +894,7 @@ class PaginaEsegui(PaginaBase):
                 "esito_scrittura",
                 aggiunti=statistica.aggiunti,
                 duplicati=self.w.report.duplicati,
+                mancanti=self.w.report.mancanti,
                 saltati=self.w.report.saltati,
                 errori=self.w.report.errori,
             ))

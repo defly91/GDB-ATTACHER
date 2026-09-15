@@ -252,8 +252,8 @@ STRINGHE = {
         "applica_stile_checkbox": "Applica lo stile «variante A» alla tabella allegati",
         "stile_salta": "Non applicare lo stile (potrai applicarlo dopo con «Carica stile»).",
 
-        "esito_scrittura": "Scrittura conclusa: {aggiunti} aggiunti, {duplicati} duplicati, "
-                           "{saltati} saltati, {errori} errori.",
+        "esito_scrittura": "Scrittura conclusa: {aggiunti} aggiunti, {duplicati} già presenti, "
+                           "{mancanti} file non trovati, {saltati} saltati, {errori} errori.",
         "annulla_zero_scritto": "Annullato prima di scrivere: nessuna modifica al geodatabase.",
         # --- pagina stile
         "titolo_stile": "Stile della tabella allegati",
@@ -486,8 +486,8 @@ STRINGHE = {
                                 "the geodatabase is unchanged.",
         "applica_stile_checkbox": "Apply the “variant A” style to the attachment table",
         "stile_salta": "Do not apply the style (you can load it later with “Load style”).",
-        "esito_scrittura": "Write finished: {aggiunti} added, {duplicati} duplicates, "
-                           "{saltati} skipped, {errori} errors.",
+        "esito_scrittura": "Write finished: {aggiunti} added, {duplicati} already there, "
+                           "{mancanti} missing files, {saltati} skipped, {errori} errors.",
         "annulla_zero_scritto": "Cancelled before writing: no change to the geodatabase.",
         # --- style page
         "titolo_stile": "Attachment table style",

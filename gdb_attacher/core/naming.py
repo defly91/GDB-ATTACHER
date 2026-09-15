@@ -72,8 +72,8 @@ NOMI_COLONNA_FILE = ("file", "percorso", "path", "nome_file", "nomefile", "filen
                      "foto", "allegato", "attachment", "documento")
 NOMI_COLONNA_NOME = ("att_name", "nome_allegato", "nome", "name", "alias")
 
-#: Codifiche provate in ordine quando leggo il CSV.
-ENCODING_CSV = ("utf-8-sig", "utf-8", "cp1252")
+#: Codifiche provate in ordine quando leggo il CSV (il BOM UTF-8 è gestito a parte).
+ENCODING_CSV = ("utf-8", "cp1252")
 
 #: Tetto ai tentativi di rinomina per collisione.
 MAX_SUFFISSO = 1000
@@ -388,7 +388,8 @@ def risolvi_collisioni(candidati, esistenti=(), rinomina_se_esistente: bool = Fa
     """
     from .attach import chiave_dedup
 
-    usate = {chiave for chiave in esistenti if chiave}
+    chiavi_esistenti = {chiave for chiave in esistenti if chiave}
+    usate = set(chiavi_esistenti)      # nomi già impegnati (tabella + lotto)
     risultato = []
     for candidato in candidati:
         if candidato.stato != "ok":
@@ -397,7 +398,7 @@ def risolvi_collisioni(candidati, esistenti=(), rinomina_se_esistente: bool = Fa
 
         base = candidato.nome_allegato
         chiave_base = chiave_dedup(candidato.id_parent, base)
-        if chiave_base and chiave_base in usate and not rinomina_se_esistente:
+        if chiave_base and chiave_base in chiavi_esistenti and not rinomina_se_esistente:
             candidato.stato = "duplicato"
             candidato.motivo = "allegato già presente nella tabella allegati"
             risultato.append(candidato)
@@ -430,7 +431,17 @@ def risolvi_collisioni(candidati, esistenti=(), rinomina_se_esistente: bool = Fa
 
 
 def _decodifica(grezzo: bytes) -> tuple:
-    """Testo + codifica usata, provando UTF-8 (con/senza BOM) e poi cp1252."""
+    """Testo + codifica usata: BOM UTF-8 quando c'è, poi UTF-8, poi cp1252.
+
+    Il BOM va riconosciuto dai byte, non provando ``utf-8-sig``: la decodifica
+    ``utf-8-sig`` riesce anche senza BOM e riporterebbe una codifica sbagliata
+    nell'anteprima.
+    """
+    if grezzo.startswith(b"\xef\xbb\xbf"):
+        try:
+            return grezzo.decode("utf-8-sig"), "utf-8-sig"
+        except UnicodeDecodeError:
+            pass
     for codifica in ENCODING_CSV:
         try:
             return grezzo.decode(codifica), codifica
@@ -528,12 +539,14 @@ def leggi_csv_allegati(percorso: str, chiave: str = "GLOBALID", colonna_file: st
     indice_chiave = intestazioni.index(colonna_chiave)
     colonna_file_trovata = colonna_file or _trova_colonna(intestazioni, NOMI_COLONNA_FILE)
     colonna_nome_trovata = colonna_att_name or _trova_colonna(intestazioni, NOMI_COLONNA_NOME)
-    elenco.colonna_file = colonna_file_trovata
-    elenco.colonna_nome = colonna_nome_trovata
+    indice_file = intestazioni.index(colonna_file_trovata) if colonna_file_trovata in intestazioni else -1
+    indice_nome = intestazioni.index(colonna_nome_trovata) if colonna_nome_trovata in intestazioni else -1
+    elenco.colonna_file = colonna_file_trovata if indice_file >= 0 else ""
+    elenco.colonna_nome = colonna_nome_trovata if indice_nome >= 0 else ""
 
     if colonna_file and colonna_file not in intestazioni:
         elenco.avvisi.append(("colonna_mancante", colonna_file))
-    elif not colonna_file_trovata:
+    elif indice_file < 0:
         elenco.avvisi.append(("colonna_file_da_indicare", ""))
 
     for numero, riga in enumerate(lettore[1:], start=2):
@@ -541,12 +554,8 @@ def leggi_csv_allegati(percorso: str, chiave: str = "GLOBALID", colonna_file: st
         chiave_riga = celle[indice_chiave] if indice_chiave < len(celle) else ""
         if not chiave_riga:
             continue
-        percorso_riga = ""
-        if colonna_file_trovata and intestazioni.index(colonna_file_trovata) < len(celle):
-            percorso_riga = celle[intestazioni.index(colonna_file_trovata)]
-        nome_riga = ""
-        if colonna_nome_trovata and intestazioni.index(colonna_nome_trovata) < len(celle):
-            nome_riga = celle[intestazioni.index(colonna_nome_trovata)]
+        percorso_riga = celle[indice_file] if 0 <= indice_file < len(celle) else ""
+        nome_riga = celle[indice_nome] if 0 <= indice_nome < len(celle) else ""
         riga_csv = RigaCsv(numero=numero, chiave=chiave_riga,
                            percorso=percorso_riga, nome=nome_riga)
         elenco.righe.append(riga_csv)

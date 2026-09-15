@@ -77,7 +77,8 @@ class ReportFinale:
     aggiunti: int = 0
     duplicati: int = 0            # «già presenti» (deduplica e idempotenza)
     collisioni: int = 0          # rinominate con _2, _3…
-    saltati: int = 0             # valori vuoti, nomi vuoti, chiavi ignote, file non risolti
+    mancanti: int = 0            # file atteso non trovato (missing / file_ignoto)
+    saltati: int = 0             # valori vuoti, nomi vuoti, chiavi del CSV fuori dal layer
     errori: int = 0
     righe: list = field(default_factory=list)
     annullata: bool = False
@@ -142,6 +143,11 @@ def report_da_candidati(candidati, statistica=None, avvisi=None) -> ReportFinale
     I conteggi vengono dai candidati — così il report a video e l'anteprima dicono
     la stessa cosa — e dalla statistica di scrittura per ciò che si sa solo dopo il
     commit (errori di ``addFeature``, eventuali duplicati sfuggiti alla preview).
+
+    Distinzione dei «salti», come nei due script in repo: i **file non trovati**
+    finiscono in ``mancanti`` (è il caso più frequente e merita un numero suo, il
+    «Saltati (foto mancante o dati nulli)» dello script batch), gli altri — valori
+    vuoti, nomi vuoti dalla formula, chiavi del CSV fuori dal layer — in ``saltati``.
     """
     candidati = list(candidati)
     conteggi = naming.conteggi(candidati)
@@ -150,8 +156,8 @@ def report_da_candidati(candidati, statistica=None, avvisi=None) -> ReportFinale
         aggiunti=conteggi["ok"] + conteggi["collisione"],
         duplicati=conteggi["duplicato"],
         collisioni=conteggi["collisione"],
-        saltati=(conteggi["vuoto"] + conteggi["salta"] + conteggi["chiave_ignota"]
-                 + conteggi["file_ignoto"]),
+        mancanti=conteggi["missing"] + conteggi["file_ignoto"],
+        saltati=conteggi["vuoto"] + conteggi["salta"] + conteggi["chiave_ignota"],
         errori=conteggi["errore"],
         righe=[
             RigaReport(
