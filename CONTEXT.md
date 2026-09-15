@@ -20,6 +20,10 @@ _Avoid_: attachment, record allegato, file allegato
 Un campo del layer sorgente i cui valori contengono nomi o percorsi di file da allegare.
 _Avoid_: campo file, campo path, campo immagine
 
+**Nome allegato**:
+Il valore del campo `ATT_NAME` di un allegato: il nome con cui il file è riconoscibile dentro il GDB. È indipendente dal file su disco e dal campo foto che lo ha risolto.
+_Avoid_: nome file, filename, path
+
 **Formula**:
-La regola di naming che calcola il nome di un allegato a partire dai campi della feature.
+La regola che calcola il **nome allegato** di un allegato a partire dai campi della feature.
 _Avoid_: espressione di naming, pattern, template
