@@ -415,7 +415,9 @@ def scrivi_allegati(layer_allegati, candidati, campi=None, chiavi_esistenti=None
     :param campi: mappa ruolo → nome reale dei campi (di default la ricalcola)
     :param chiavi_esistenti: cache di deduplicazione già pronta (di default la carica)
     :param callback_progresso: ``f(indice, totale, candidato)``; se ritorna ``False``
-        il batch si ferma e viene annullato (nessuna scrittura: ``EsecuzioneAnnullata``)
+        il batch si ferma e viene annullato: nessuna scrittura, ``statistica.annullata``
+        vale ``True`` (l'eccezione interna ``EsecuzioneAnnullata`` non esce da qui, il
+        wizard guarda il flag per mostrare "esecuzione annullata")
     :return: :class:`StatisticaScrittura`
 
     Tutte le righe scritte stanno in un unico blocco ``with edit(...)``: se QGIS
