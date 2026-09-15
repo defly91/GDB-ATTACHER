@@ -340,3 +340,35 @@ def test_due_feature_diverse_non_sono_duplicati(cartella_foto):
     layer = crea_layer_attach()
     statistica = attach.scrivi_allegati(layer, pianificati)
     assert statistica.aggiunti == 2
+
+
+# ------------------------------------------- foto ambigua (risoluzione per nome)
+def test_un_nome_presente_in_due_cartelle_non_viene_risolto_a_caso(tmp_path):
+    """Difetto: con lo stesso basename in cartelle diverse (`2023/` e `2024/`) la
+    risoluzione per nome prendeva il primo che `os.walk` incontrava: si allegava la foto
+    sbagliata senza alcun avviso, perché l'ordine di lettura delle cartelle non è stabile."""
+    from gdb_attacher.core import discovery
+
+    base = tmp_path / "foto"
+    for anno in ("2023", "2024"):
+        (base / anno).mkdir(parents=True)
+        (base / anno / "SS_0001.jpg").write_bytes(b"\xff\xd8\xff\xe0 " + anno.encode())
+
+    indice = discovery.IndiceFile(str(base))
+
+    assert indice.risolvi("SS_0001.jpg") == "", "nome ambiguo: non si risolve a caso"
+    percorso = indice.risolvi("2023/SS_0001.jpg")
+    assert percorso.endswith(os.path.join("2023", "SS_0001.jpg")), percorso
+
+
+def test_un_nome_presente_in_una_sola_cartella_si_risolve(tmp_path):
+    from gdb_attacher.core import discovery
+
+    base = tmp_path / "foto"
+    (base / "2024").mkdir(parents=True)
+    (base / "2024" / "SS_0009.jpg").write_bytes(b"\xff\xd8\xff\xe0 unica")
+
+    indice = discovery.IndiceFile(str(base))
+
+    assert indice.risolvi("SS_0009.jpg").endswith("SS_0009.jpg")
+    assert indice.risolvi("SS_0009").endswith("SS_0009.jpg")     # senza estensione
