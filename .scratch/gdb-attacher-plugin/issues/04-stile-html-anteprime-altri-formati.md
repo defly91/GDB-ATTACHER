@@ -1,6 +1,6 @@
 Map: [map](../map.md)
 Type: prototype (HITL)
-Status: open
+Status: resolved (2026-09-15, branch `prototype/04-stile-html-anteprime`, variante **A**)
 Blocked by: 02
 Labels: wayfinder:prototype
 
@@ -13,6 +13,13 @@ Artefatto: `prototype/04-attach-style/` — 3 varianti QML + `test_attach.gdb` +
 - C `variante_C_blindata.qml`: 3 tab, `ATT_NAME` obbligatorio, pulsante Apri nel form.
 - Verdetti chiusi: `to_base64("DATA")` fedele ai byte (4/4 round-trip su GDB); **form HTML via `expression.evaluate` JS, mai `[% %]`** (sintassi mapTip/stampa; cfr. qgshtmlwidgetwrapper.cpp); ExternalResource NON applicabile al blob (solo nome, non percorso); PDF/TIFF/MP4 solo via azione Apri (export temp + programma predefinito); limite noto nomi con apice → ticket 06.
 - Validazione headless: 3/3 reload QML OK, vincoli/azioni/alias serializzati. Non verificato: resa visiva reale — serve prova in QGIS (`applica('A'/'B'/'C')`).
+
+## Risoluzione (reazione umana 2026-09-15)
+
+- **Variante scelta: A — Anteprima in testa** (2 tab: *Anteprima* HTML inline + *Dati tecnici*; mapTip con miniatura; azioni *Apri*/*Salva con nome*; blob visibile ma in sola lettura).
+- Le altre due varianti restano nell'artefatto come riferimento, non si applicano di default.
+- Sotto-domande del README non discusse esplicitamente (restano ricombinabili in implementazione): anteprima in tabella attributi, pulsante *Apri* dentro il form, QML unico vs per-mime. La variante A implica: niente HTML in tabella attributi, *Apri* via menu Azioni, QML unico.
+- Verdetti tecnici e limite apice/nomi confermati come da prototipo (dettaglio nel `prototype/04-attach-style/README.md`).
 
 ## Question
 

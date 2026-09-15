@@ -14,11 +14,12 @@ Spec decisionale pronta per il plugin QGIS GDB-Attacher: wizard che seleziona un
 - [Creare _ATTACH senza rompere il GDB](issues/02-creare-attach-senza-rompere-gdb.md): mai creare `__ATTACH` a mano; se manca/incompleta bloccare e rimandare a Pro, scrivere con i 6 campi normalizzati.
 - [TOS e licenze FileGDB per il plugin](issues/01-tos-licenze-filegdb-plugin.md): nessuna violazione con solo GDAL OpenFileGDB, licenza GPLv2+, dipendenze dichiarate, niente binari.
 - [Wizard selezione layer e UX](issues/03-wizard-selezione-layer-ux.md): solo layer in progetto su FileGDB; verifica bloccante → discovery → campi → naming → esegui → stile; blocco duro sui casi anomali; preview a conteggi + esempi naming su 5 feature; backup aggirabile, transazione unica, report con export missing; QML auto-applicato; IT+EN; glossario in `CONTEXT.md`.
+- [Stile `_ATTACH` e anteprime altri formati](issues/04-stile-html-anteprime-altri-formati.md): variante A (anteprima in testa, HTML inline + mapTip); nel form non vale `[% %]` → bridge JS `expression.evaluate`; ExternalResource non applicabile al blob; PDF/TIFF/MP4 solo via azione *Apri*; nomi con apice → ticket 06.
 
 ## Not yet specified
 
 - Performance e batch: migliaia di foto, transazioni `edit()`, rollback, deduplica su `(REL_GLOBALID, ATT_NAME)`, resume dopo crash.
-- Dettagli stile: widget HTML vs form custom, comportamento per PDF/TIFF/MP4, QML di default versionato, anteprima su canvas vs form feature.
+- Stile: QML di default versionato/incluso nel plugin (packaging, vedi ticket 07).
 - Formula di naming: sintassi (espressioni QGIS?), univocità, sanitizzazione caratteri, cosa fare con collisioni.
 - CSV join: chiave univoca (GLOBALID?), separatore/encoding, validazione path, preview prima dell'attach.
 - Altre idee da valutare: galleria multi-foto, supporto QField, test su GDB campioni, i18n IT/EN, pubblicazione su repo ufficiale QGIS, licenza plugin (GPL2).
