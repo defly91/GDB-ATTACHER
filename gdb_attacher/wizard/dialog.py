@@ -91,7 +91,7 @@ class PaginaBase(QWizardPage):
             for colonna, valore in enumerate(celle):
                 testo = "" if valore is None else str(valore)
                 elemento = QTableWidgetItem(testo)
-                if testo and "mancante" in testo.lower():
+                if testo and self.t("marcatore_errore").lower() in testo.lower():
                     elemento.setForeground(Qt.red)
                 tabella.setItem(numero, colonna, elemento)
         tabella.resizeColumnsToContents()
@@ -101,8 +101,8 @@ class PaginaBase(QWizardPage):
     def _filtro_csv(self, tutti=False):
         """Filtro dei dialoghi file CSV, tradotto (il filtro lo legge l'utente).
 
-        In italiano resta esattamente quello di prima; in inglese non mostra più
-        «Tutti i file (*)» dentro un'interfaccia tradotta.
+        In italiano resta esattamente quello di prima; in inglese il filtro non
+        resta in italiano dentro un'interfaccia tradotta.
         """
         filtro = self.t("filtro_csv")
         return f"{filtro};;{self.t('filtro_tutti_i_file')}" if tutti else filtro
@@ -404,7 +404,8 @@ class PaginaDiscovery(PaginaBase):
             return
         righe = [
             (t_livello(r.livello, self.w.lingua), r.campo, r.tipo, f"{r.n_non_null}/{r.n_valori}",
-             f"{r.esiste_rate:.0%}", f"{r.multi_rate:.0%}", "sì" if r.nome_match else "—",
+             f"{r.esiste_rate:.0%}", f"{r.multi_rate:.0%}",
+             self.t("sì") if r.nome_match else "—",
              r.motivo, " · ".join(r.esempi))
             for r in self.w.righe_discovery
         ]
@@ -523,7 +524,7 @@ class PaginaNaming(PaginaBase):
 
         # --- formula
         self.formula = QLineEdit()
-        self.formula.setPlaceholderText('@stem || "_" || "CODICE" || @ext')
+        self.formula.setPlaceholderText(self.t("formula_esempio"))
         self.formula.textChanged.connect(lambda _t: self.completeChanged.emit())
         self.aiuto_formula = QLabel(self.t("aiuto_formula"))
         self.aiuto_formula.setWordWrap(True)
@@ -626,7 +627,8 @@ class PaginaNaming(PaginaBase):
     def prova_formula(self):
         errore, avviso = naming.verifica_formula(self.formula.text(), self.w.layer_sorgente)
         if errore:
-            QMessageBox.warning(self, self.t("formula_non_valida", errore=errore), errore)
+            QMessageBox.warning(self, self.t("formula_non_valida_titolo"),
+                                self.t("formula_non_valida", errore=errore))
         elif avviso:
             QMessageBox.information(self, self.t("attenzione_titolo"), avviso)
         else:
@@ -637,7 +639,8 @@ class PaginaNaming(PaginaBase):
 
     def scegli_csv(self):
         percorso, _filtro = QFileDialog.getOpenFileName(
-            self, self.t("csv_file"), self.csv_percorso.text() or "", "CSV (*.csv *.txt);;Tutti i file (*)"
+            self, self.t("csv_file"), self.csv_percorso.text() or "",
+            self._filtro_csv(tutti=True),
         )
         if percorso:
             self.csv_percorso.setText(percorso)
@@ -816,14 +819,17 @@ class PaginaNaming(PaginaBase):
         self._riempi(self.tabella, righe)
 
         conteggi = anteprima.conteggi
-        self.conteggi.setText("   ".join([
+        pezzi = [
             self.t("totale_ok", n=conteggi["ok"] + conteggi["collisione"]),
             self.t("atto_totale_duplicati", n=conteggi["duplicato"]),
             self.t("totale_missing", n=conteggi["missing"] + conteggi["file_ignoto"]),
             self.t("totale_collisioni", n=conteggi["collisione"]),
             # `saltati` è già la somma del core (vuoto + salta + …): non risommarlo.
             self.t("totale_saltati", n=conteggi["saltati"]),
-        ]))
+        ]
+        if avvisi:
+            pezzi.append(self.t("esito_avvisi", n=len(avvisi)))
+        self.conteggi.setText("   ".join(pezzi))
         per_campo = " · ".join(f"{campo}: {n}" for campo, n in anteprima.conteggi_per_campo.items())
         self.per_campo.setText(f"{self.t('conteggi_per_campo')} {per_campo or '—'}   "
                                f"{self.t('nota_galleria')}")
@@ -845,9 +851,11 @@ class PaginaNaming(PaginaBase):
         self.w.formula = self.formula.text()
         self.w.rinomina_se_esistente = self.comportamento_rinomina()
         self.aggiorna_anteprima()
+        if self.w.modalita == naming.MODALITA_FORMULA and not self.w.formula.strip():
+            QMessageBox.warning(self, self.t("attenzione_titolo"), self.t("formula_manca"))
+            return False
         if self.w.modalita == naming.MODALITA_CSV and self.w.elenco_csv is None:
-            QMessageBox.warning(self, self.t("attenzione_titolo"), self.t("csv_blocco_illegibile",
-                                                                          errore="CSV mancante"))
+            QMessageBox.warning(self, self.t("attenzione_titolo"), self.t("csv_non_scelto"))
             return False
         return True
 
@@ -883,6 +891,11 @@ class PaginaEsegui(PaginaBase):
         self.radio_backup.toggled.connect(lambda acceso: self.cartella_backup.setEnabled(acceso))
 
         self.conferma = QCheckBox(self.t("conferma_esecuzione"))
+        # Nota sul significato di «già presenti»: rende leggibile il numero del
+        # conteggio senza dover riaprire il passo 5 (ticket 02, deduplica).
+        nota_dedup = QLabel(self.t("nota_dedup"))
+        nota_dedup.setWordWrap(True)
+        nota_dedup.setStyleSheet("color:#555")
         self.conferma.stateChanged.connect(lambda _s: self._aggiorna_bottone())
         self.bottone_esegui = QPushButton(self.t("esegui"))
         self.bottone_esegui.clicked.connect(self.esegui)
@@ -899,27 +912,31 @@ class PaginaEsegui(PaginaBase):
         self.bottone_export_tutto = QPushButton(self.t("export_tutto"))
         self.bottone_export_tutto.clicked.connect(lambda: self.esporta(solo_anomalie=False))
         self.bottone_export_tutto.setEnabled(False)
+        gruppo_report = QGroupBox(self.t("titolo_report"))
 
         disposizione = QVBoxLayout(self)
         disposizione.addWidget(self.riepilogo)
         disposizione.addWidget(self.contatori)
         disposizione.addWidget(gruppo_backup)
         disposizione.addWidget(self.conferma)
+        disposizione.addWidget(nota_dedup)
         riga = QHBoxLayout()
         riga.addWidget(self.bottone_esegui)
         riga.addWidget(self.bottone_annulla)
         riga.addWidget(self.barra, 1)
         disposizione.addLayout(riga)
         disposizione.addWidget(self.esito, 1)
+        nota_report = QLabel(self.t("report_apri_cartella"))
+        nota_report.setWordWrap(True)
+        nota_report.setStyleSheet("color:#555")
         riga_export = QHBoxLayout()
         riga_export.addWidget(self.bottone_export)
         riga_export.addWidget(self.bottone_export_tutto)
         riga_export.addStretch(1)
-        disposizione.addLayout(riga_export)
-        nota_report = QLabel(self.t("report_apri_cartella"))
-        nota_report.setWordWrap(True)
-        nota_report.setStyleSheet("color:#555")
-        disposizione.addWidget(nota_report)
+        disposizione_report = QVBoxLayout(gruppo_report)
+        disposizione_report.addWidget(nota_report)
+        disposizione_report.addLayout(riga_export)
+        disposizione.addWidget(gruppo_report)
         self._annulla_richiesto = False
         self._in_corso = False
 

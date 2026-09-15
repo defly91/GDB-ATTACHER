@@ -68,15 +68,16 @@ STRINGHE = {
         "indietro": "Indietro",
         "annulla": "Annulla",
         "fine": "Fine",
-        "chiudi": "Chiudi",
         "sfoglia": "Sfoglia…",
         "aggiorna": "Aggiorna",
         "nessuno": "—",
         "sì": "Sì",
-        "no": "No",
+        # Sottostringa che evidenzia in rosso una cella di tabella (`_riempi`).
+        # Sta qui perché è testo che l'utente legge: in inglese non può essere
+        # «mancante», o l'evidenziazione sparirebbe.
+        "marcatore_errore": "mancante",
         "errore_titolo": "Errore",
         "attenzione_titolo": "Attenzione",
-        "in_corso": "Operazione in corso…",
         # --- pagine
         "pagina_layer": "1. Layer sorgente",
         "pagina_verifica": "2. Verifica",
@@ -126,7 +127,6 @@ STRINGHE = {
                                      "verifica i permessi del .gdb o se un altro processo lo sta già scrivendo.",
         "come_abilitare": "come abilitare gli allegati",
         # --- pagina discovery
-        "titolo_discovery": "Discovery dei campi foto",
         "testo_discovery": "Il plugin legge un campione di valori per ogni campo e propone i campi che "
                            "contengono nomi o percorsi di file. La cartella base è il segnale più forte: "
                            "con la cartella base i nomi senza estensione diventano livello A.",
@@ -154,7 +154,6 @@ STRINGHE = {
         "cartella_base_non_valida": "La cartella «{cartella}» non esiste o non è leggibile.",
         "errore_scansione": "Errore imprevisto durante l'analisi dei campi: {errore}",
         # --- pagina campi
-        "titolo_campi": "Quali campi sono campi foto",
         "testo_campi": "Spunta i campi del layer sorgente che contengono il file da allegare. "
                        "Più campi spuntati = un allegato per campo (3 campi = 3 righe nella tabella allegati).",
         "col_scelto": "Usa",
@@ -184,7 +183,9 @@ STRINGHE = {
                          "Esempio: @stem || '_' || \"CODICE\" || @ext",
         "formula_manca": "Scrivi una formula per proseguire.",
         "formula_non_valida": "Formula non valida: {errore}",
+        "formula_non_valida_titolo": "Formula non valida",
         "formula_prova": "Prova",
+        "formula_esempio": "@stem || \"_\" || \"CODICE\" || @ext",
         "csv_file": "File CSV:",
         "filtro_csv": "CSV (*.csv *.txt)",
         "filtro_csv_export": "CSV (*.csv)",
@@ -196,17 +197,16 @@ STRINGHE = {
         "csv_encoding": "Codifica: {encoding}",
         "csv_blocco_illegibile": "CSV illeggibile: {errore}",
         "csv_blocco_chiave": "Nel CSV non c'è la colonna chiave «{colonna}».",
+        "csv_non_scelto": "Nessun CSV valido: scegli un file CSV leggibile.",
         "csv_avviso_chiave_mancante": "Il CSV non ha la colonna «{colonna}» indicata: controllo saltato.",
         "csv_avviso_chiavi_ignote": "{n} chiavi del CSV non esistono nel layer: verranno saltate.",
         "csv_avviso_chiavi_duplicate": "{n} chiavi del CSV sono ripetute (più allegati sulla stessa feature).",
         "csv_righe": "{n} righe valide nel CSV.",
-        "anteprima_titolo": "Anteprima",
         "anteprima_5": "5 feature di esempio: valore del campo → file risolto → nome allegato",
         "col_valore_campo": "Valore campo",
         "col_percorso": "File risolto",
         "col_nome_finale": "Nome allegato",
         "col_stato": "Stato",
-        "col_conteggio": "Allegati",
         "conteggi_per_campo": "Conteggio per campo foto:",
         "totale_ok": "Da aggiungere: {n}",
         "totale_missing": "File mancanti: {n}",
@@ -222,7 +222,6 @@ STRINGHE = {
         "stato_chiave_ignota": "chiave non nel layer",
         "stato_file_ignoto": "file non risolto",
         # --- pagina esegui
-        "titolo_esegui": "Esegui",
         "riepilogo_esecuzione": "Sto per scrivere {ok} allegati nella tabella «{tabella}», "
                                 "in una sola transazione.",
         "backup_titolo": "Backup del .gdb prima di scrivere",
@@ -249,7 +248,6 @@ STRINGHE = {
                       "• report finale esportabile in CSV, stile «variante A» applicato dopo la scrittura\n\n"
                       "Fuori perimetro in v1: QField (nessuna sincronizzazione sul campo, né raccolta offline).\n\n"
                       "GPLv2+ · https://github.com/defly91/GDB-ATTACHER",
-        "esecuzione": "Esegui",
         "esecuzione_annulla": "Annulla la scrittura",
         "esecuzione_annullata": "Scrittura annullata: la transazione è stata annullata, "
                                 "il geodatabase è rimasto com'era.",
@@ -265,7 +263,6 @@ STRINGHE = {
         "errore_export": "Report non salvato: {errore}",
         "annulla_zero_scritto": "Annullato prima di scrivere: nessuna modifica al geodatabase.",
         # --- pagina stile
-        "titolo_stile": "Stile della tabella allegati",
         "testo_stile": "Alla fine viene applicato alla tabella allegati lo stile «variante A»: anteprima "
                        "della foto nel form, mapTip con miniatura, azioni Apri e Salva con nome. "
                        "Lo stile esistente viene sovrascritto.",
@@ -276,7 +273,6 @@ STRINGHE = {
         "stile_qml_non_trovato": "QML non trovato nel plugin: {percorso}",
         # --- report
         "titolo_report": "Report",
-        "report_titolo": "Report finale",
         "export_missing": "Esporta i mancanti/gli errori in CSV…",
         "export_tutto": "Esporta tutto il report in CSV…",
         "report_salvato": "Report salvato: {percorso}",
@@ -292,7 +288,6 @@ STRINGHE = {
                           "saltare rende il batch ripetibile senza duplicare nulla.",
         "aggiorna_anteprima": "Aggiorna l'anteprima",
         "stato_avviso": "avviso",
-        "galleria_titolo": "Galleria multi-foto",
         "esito_avvisi": "Avvisi: {n}",
         "col_valore": "Valore",
         "col_percorso_file": "Percorso file",
@@ -314,15 +309,14 @@ STRINGHE = {
         "indietro": "Back",
         "annulla": "Cancel",
         "fine": "Finish",
-        "chiudi": "Close",
         "sfoglia": "Browse…",
         "aggiorna": "Refresh",
         "nessuno": "—",
         "sì": "Yes",
-        "no": "No",
+        # Vedi la nota in italiano: è il marcatore evidenziato da `_riempi`.
+        "marcatore_errore": "missing",
         "errore_titolo": "Error",
         "attenzione_titolo": "Warning",
-        "in_corso": "Working…",
         # --- pages
         "pagina_layer": "1. Source layer",
         "pagina_verifica": "2. Checks",
@@ -371,7 +365,6 @@ STRINGHE = {
                                      "permissions or whether another process is already writing to it.",
         "come_abilitare": "how to enable attachments",
         # --- discovery page
-        "titolo_discovery": "Photo field discovery",
         "testo_discovery": "The plugin samples each field's values and suggests the fields that contain file "
                            "names or paths. The base folder is the strongest signal: with it, names without "
                            "extension become level A.",
@@ -399,7 +392,6 @@ STRINGHE = {
         "cartella_base_non_valida": "Folder “{cartella}” does not exist or is not readable.",
         "errore_scansione": "Unexpected error while scanning the fields: {errore}",
         # --- field selection page
-        "titolo_campi": "Which fields are photo fields",
         "testo_campi": "Tick the source-layer fields that hold the file to attach. "
                        "More fields = one attachment per field (3 fields = 3 rows in the attachment table).",
         "col_scelto": "Use",
@@ -428,7 +420,9 @@ STRINGHE = {
                          "Example: @stem || '_' || \"CODE\" || @ext",
         "formula_manca": "Write a formula to continue.",
         "formula_non_valida": "Invalid formula: {errore}",
+        "formula_non_valida_titolo": "Invalid formula",
         "formula_prova": "Test",
+        "formula_esempio": "@stem || \"_\" || \"CODE\" || @ext",
         "csv_file": "CSV file:",
         "filtro_csv": "CSV (*.csv *.txt)",
         "filtro_csv_export": "CSV (*.csv)",
@@ -440,17 +434,16 @@ STRINGHE = {
         "csv_encoding": "Encoding: {encoding}",
         "csv_blocco_illegibile": "Unreadable CSV: {errore}",
         "csv_blocco_chiave": "The CSV has no key column “{colonna}”.",
+        "csv_non_scelto": "No valid CSV: choose a readable CSV file.",
         "csv_avviso_chiave_mancante": "The CSV has no column “{colonna}”: check skipped.",
         "csv_avviso_chiavi_ignote": "{n} CSV keys do not exist in the layer: they will be skipped.",
         "csv_avviso_chiavi_duplicate": "{n} CSV keys are repeated (several attachments on the same feature).",
         "csv_righe": "{n} valid rows in the CSV.",
-        "anteprima_titolo": "Preview",
         "anteprima_5": "5 sample features: field value → resolved file → attachment name",
         "col_valore_campo": "Field value",
         "col_percorso": "Resolved file",
         "col_nome_finale": "Attachment name",
         "col_stato": "State",
-        "col_conteggio": "Attachments",
         "conteggi_per_campo": "Count per photo field:",
         "totale_ok": "To add: {n}",
         "totale_missing": "Missing files: {n}",
@@ -466,7 +459,6 @@ STRINGHE = {
         "stato_chiave_ignota": "key not in layer",
         "stato_file_ignoto": "file not resolved",
         # --- run page
-        "titolo_esegui": "Run",
         "riepilogo_esecuzione": "About to write {ok} attachments into table “{tabella}”, "
                                 "in a single transaction.",
         "backup_titolo": "Back up the .gdb before writing",
@@ -493,7 +485,6 @@ STRINGHE = {
                       "• final report exportable to CSV, “variant A” style applied after the write\n\n"
                       "Out of scope in v1: QField (no field sync, no offline collection).\n\n"
                       "GPLv2+ · https://github.com/defly91/GDB-ATTACHER",
-        "esecuzione": "Run",
         "esecuzione_annulla": "Cancel the write",
         "esecuzione_annullata": "Write cancelled: the transaction was rolled back, "
                                 "the geodatabase is unchanged.",
@@ -508,7 +499,6 @@ STRINGHE = {
         "errore_export": "Report not saved: {errore}",
         "annulla_zero_scritto": "Cancelled before writing: no change to the geodatabase.",
         # --- style page
-        "titolo_stile": "Attachment table style",
         "testo_stile": "At the end the “variant A” style is applied to the attachment table: photo preview in "
                        "the form, thumbnail mapTip, Open and Save-as actions. Any existing style is overwritten.",
         "applica_stile": "Apply the style to the attachment table",
@@ -518,7 +508,6 @@ STRINGHE = {
         "stile_qml_non_trovato": "QML not found in the plugin: {percorso}",
         # --- report
         "titolo_report": "Report",
-        "report_titolo": "Final report",
         "export_missing": "Export missing/errors to CSV…",
         "export_tutto": "Export the whole report to CSV…",
         "report_salvato": "Report saved: {percorso}",
@@ -534,7 +523,6 @@ STRINGHE = {
                           "skipping makes the batch repeatable without duplicating anything.",
         "aggiorna_anteprima": "Refresh the preview",
         "stato_avviso": "warning",
-        "galleria_titolo": "Multi-photo gallery",
         "esito_avvisi": "Warnings: {n}",
         "col_valore": "Value",
         "col_percorso_file": "File path",
