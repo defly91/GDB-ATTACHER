@@ -23,3 +23,13 @@ __pycache__/
 .DS_Store
 Thumbs.db
 Desktop.ini
+
+# Build del plugin (zip prodotto da scripts/build_plugin_zip.sh)
+dist/
+
+# CI: il workflow vive in ci/github-actions.yml perche' GitHub rifiuta i push di
+# .github/workflows/* con un token che ha solo lo scope `repo`. La copia pronta
+# all'uso sta qui sotto ma resta fuori dal versionamento: copiala con
+#   cp ci/github-actions.yml .github/workflows/ci.yml
+# quando pushi con un token che ha anche lo scope `workflow`.
+.github/workflows/ci.yml

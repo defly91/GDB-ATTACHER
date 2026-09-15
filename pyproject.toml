@@ -1,0 +1,42 @@
+# pyproject.toml — metadati minimi del progetto + configurazione pytest.
+#
+# Il plugin NON si installa via pip: si distribuisce come zip (scripts/build_plugin_zip.sh)
+# o copiando la cartella `gdb_attacher/` nel profilo QGIS. `[project]` serve solo a
+# descrivere il repo e a tenere una versione unica per tool e CI.
+
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gdb-attacher"
+version = "0.1.0"
+description = "Plugin QGIS per allegare foto e file alle feature di un FileGDB Esri"
+readme = "README.md"
+requires-python = ">=3.9"
+keywords = ["qgis", "filegdb", "attachments", "gdal"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Plugins",
+    "Intended Audience :: End Users/Desktop",
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering :: GIS",
+]
+# GPLv2+ (vedi licenza del plugin), coerente con la decisione del ticket 01.
+license = { text = "GPL-2.0-or-later" }
+
+[tool.setuptools]
+# Il pacchetto del plugin non e' un pacchetto Python installabile: niente moduli.
+packages = []
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q --strict-markers"
+markers = [
+    "unit: test di logica pura che girano con il finto QGIS (nessun GDAL).",
+    "packaging: test dello zip di build e della coerenza di metadata.txt.",
+    "richiede_qgis: richiede un QGIS vero (saltato in CI, eseguito a mano).",
+    "richiede_gdb: richiede un FileGDB reale con allegati creati da ArcGIS Pro.",
+]
+# I moduli finti `qgis.*` sono iniettati da tests/conftest.py: nessun plugin pytest
+# necessario e nessuna dipendenza da GDAL/osgeo.

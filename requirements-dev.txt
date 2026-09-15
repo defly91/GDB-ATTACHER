@@ -1,0 +1,9 @@
+# Dipendenze per sviluppo e test (le installa la CI).
+#
+# I test NON richiedono QGIS/GDAL: `tests/conftest.py` inietta un finto QGIS
+# (tests/fake_qgis.py). Serve solo pytest.
+#
+#   python3 -m venv .venv
+#   .venv/bin/pip install -r requirements-dev.txt
+#   .venv/bin/pytest -q
+pytest>=8.0
