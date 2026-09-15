@@ -62,7 +62,7 @@ jobs:
             zip_path = sorted(glob.glob("dist/*.zip"))[-1]
             nomi = zipfile.ZipFile(zip_path).namelist()
             assert any(n.endswith("metadata.txt") for n in nomi), nomi
-            assert not any(n.startswith(("tests/", "docs/", ".github/")) for n in nomi)
+            assert not any(v in n for n in nomi for v in ("tests/", "docs/", ".github/"))
             print("zip ok: %s (%d file)" % (zip_path, len(nomi)))
             PY
           else

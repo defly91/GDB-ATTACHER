@@ -42,11 +42,11 @@ gdb_attacher/
 │   ├── styles.py           # applicazione QML variante A
 │   └── report.py           # conteggi, motivi di scarto, export CSV
 ├── wizard/
-│   ├── strings.py          # stringhe IT/EN centralizzate
-│   └── dialogs           # step della procedura guidata
+│   ├── strings.py          # stringhe IT/EN centralizzate (chiavi allineate fra le lingue)
+│   └── dialog.py           # le 7 pagine + finestra WizardAllegati
 └── resources/
-    ├── qml/variante_A_anteprima.qml
-    └── icons/
+    ├── stile_attach_variante_A.qml   # QML della tabella allegati (applicato in automatico)
+    └── icone/              # icona_plugin.png (PNG, richiesta da plugins.qgis.org) + SVG
 ```
 
 Regole di dipendenza: `core/naming.py`, `core/discovery.py` e `core/report.py` devono restare
@@ -213,3 +213,23 @@ discovery sui fake, dedup, calcolo del report. Vedi `docs/test-strategy.md`.
   (`suggerisci_campi.py`, tabella match-rate).
 - Script primary source: `Allega foto GDB.py`, `Aggiungi singola doto al GDB.py`.
 - Glossario: `CONTEXT.md`.
+- Verifiche: `docs/verifica-qgis-reale.md` (QGIS in container + end-to-end su FileGDB vero).
+
+## 14. Limiti noti della v1 (consapevoli, non difetti)
+
+- **Memoria**: il batch tiene in RAM tutte le feature da scrivere fino al commit (il `DATA`
+  completo). Con migliaia di foto da diversi MB il commit può fallire per memoria esaurita: ora
+  l'errore viene catturato e riportato ("nulla è stato scritto", grazie al `with edit` che fa
+  rollback), ma non c'è ancora una transazione a blocchi a livello di provider. Con lotti molto
+  grandi conviene spezzare il lavoro (es. per campo foto o per sottocartella).
+- **Stile applicato senza salvataggio**: il QML variante A viene applicato al layer in sessione
+  (`loadNamedStyle`); non viene scritto come stile del layer nel progetto. Rimuovendo e ricaricando
+  il layer lo stile va riapplicato (l'operazione è senza effetti sui dati).
+- **Nome allegato e maiuscole**: la deduplica confronta `(REL_GLOBALID, ATT_NAME)` con il nome in
+  forma Unicode NFC ma **case-sensitive** (`Foto.JPG` ≠ `foto.jpg`), come da regola "verbatim" del
+  ticket 06.
+- **Compatibilità ArcGIS**: la tabella allegati, la relationship class `__ATTACHREL` e i metadati
+  `GDB_Items` devono nascere da ArcGIS Pro. Un FileGDB creato con GDAL serve per i test di scrittura
+  (`scripts/e2e_filegdb.py`) ma non prova che l'allegato sia visibile dentro ArcGIS.
+- **QGIS 4 / Qt6**: fuori perimetro (il plugin è PyQt5, `qgisMaximumVersion=3.99`). Su QGIS 4 i
+  moduli core si caricano e il QML si applica, ma il wizard no (PyQt5 assente).

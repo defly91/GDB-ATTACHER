@@ -46,7 +46,7 @@ import io
 import os
 from dataclasses import dataclass, field, replace
 
-from .attach import normalizza_guid
+from .attach import SENTINELLE_NULL, STATI_SCRIVIBILI, normalizza_guid
 from .discovery import SEPARATORI_RE
 
 # ---------------------------------------------------------------- costanti
@@ -116,7 +116,14 @@ class CandidatoAllegato:
 
     @property
     def da_scrivere(self) -> bool:
-        return self.stato == "ok"
+        """Vero se il candidato va scritto.
+
+        Comprende lo stato ``collisione``: un allegato rinominato (``IMG_2.jpg`` per
+        collisione di nome nel lotto) **va scritto**, solo con un nome diverso. Escluderlo
+        qui lo faceva sparire in silenzio: il report lo contava come aggiunto e la foto
+        non finiva mai nel GDB.
+        """
+        return self.stato in STATI_SCRIVIBILI
 
     @property
     def rinominato(self) -> bool:
@@ -220,7 +227,12 @@ def nome_allegato_da_formula(espressione: str, riga: RigaSorgente, indice_token:
         return "", str(errore)
     if valore is None:
         return "", ""
-    return str(valore).strip(), ""
+    testo = str(valore).strip()
+    if testo.upper() in SENTINELLE_NULL:
+        # La formula ha valutato la sentinella di nullità di QGIS ("NULL"): non è un nome,
+        # è l'assenza di nome. Va saltata, non scritta come allegato chiamato "NULL".
+        return "", ""
+    return testo, ""
 
 
 def normalizza_chiave(valore) -> str:
@@ -284,7 +296,12 @@ def candidati_da_campi(righe, risolutore, modalita: str = MODALITA_PREDEFINITA,
             nome = base
 
             if modalita == MODALITA_FORMULA:
-                riga_formula = replace(riga, percorso=token)
+                # Le variabili @original_name/@stem/@ext vengono dal **file risolto**, non
+                # dal token del campo: se il token è "SS_0001" e il file è
+                # "sottosuolo/SS_0001.jpg", @ext deve valere ".jpg". Usando il token la
+                # formula precompilata @original_name scriveva "SS_0001" senza estensione,
+                # incoerente con la modalità originale che scrive "SS_0001.jpg".
+                riga_formula = replace(riga, percorso=(percorso or token))
                 nome, errore = nome_allegato_da_formula(
                     espressione, riga_formula, indice, valutatore,
                 )
@@ -334,7 +351,12 @@ def candidati_da_csv(elenco: ElencoCsv, righe, risolutore) -> list:
     """
     per_chiave = {}
     for riga in righe:
-        per_chiave.setdefault(normalizza_chiave(riga.id_parent), []).append(riga)
+        elenco_righe = per_chiave.setdefault(normalizza_chiave(riga.id_parent), [])
+        # Una sola riga per feature: con più campi foto selezionati la stessa feature
+        # compare una volta per campo, e il CSV (che indica i *file*, uno per feature)
+        # produrrebbe N allegati identici con suffisso _2, _3...
+        if not any(r.id_parent == riga.id_parent for r in elenco_righe):
+            elenco_righe.append(riga)
 
     candidati = []
     for riga_csv in elenco.righe:
@@ -393,6 +415,15 @@ def risolvi_collisioni(candidati, esistenti=(), rinomina_se_esistente: bool = Fa
     risultato = []
     for candidato in candidati:
         if candidato.stato != "ok":
+            risultato.append(candidato)
+            continue
+
+        if not normalizza_guid(candidato.id_parent):
+            # Parent senza GlobalID: nessun nome può salvarlo. Va detto con il motivo
+            # giusto, non con "impossibile trovare un nome libero" (che manda a cercare
+            # un problema di nomi quando il problema è il GlobalID mancante).
+            candidato.stato = "errore"
+            candidato.motivo = "GlobalID parent nullo"
             risultato.append(candidato)
             continue
 
@@ -537,14 +568,20 @@ def leggi_csv_allegati(percorso: str, chiave: str = "GLOBALID", colonna_file: st
     )
 
     indice_chiave = intestazioni.index(colonna_chiave)
-    colonna_file_trovata = colonna_file or _trova_colonna(intestazioni, NOMI_COLONNA_FILE)
-    colonna_nome_trovata = colonna_att_name or _trova_colonna(intestazioni, NOMI_COLONNA_NOME)
+    # Le colonne indicate dall'utente si cercano **senza distinzione di maiuscole**: se
+    # l'intestazione è "file" e l'utente sceglie "File", un confronto esatto la dà per
+    # assente e l'intero lotto finisce fra i "file non trovati" (nessun allegato scritto),
+    # con un avviso che parla di colonna mancante e manda fuori strada.
+    colonna_file_trovata = (_trova_colonna(intestazioni, (colonna_file,)) if colonna_file
+                            else _trova_colonna(intestazioni, NOMI_COLONNA_FILE))
+    colonna_nome_trovata = (_trova_colonna(intestazioni, (colonna_att_name,)) if colonna_att_name
+                            else _trova_colonna(intestazioni, NOMI_COLONNA_NOME))
     indice_file = intestazioni.index(colonna_file_trovata) if colonna_file_trovata in intestazioni else -1
     indice_nome = intestazioni.index(colonna_nome_trovata) if colonna_nome_trovata in intestazioni else -1
     elenco.colonna_file = colonna_file_trovata if indice_file >= 0 else ""
     elenco.colonna_nome = colonna_nome_trovata if indice_nome >= 0 else ""
 
-    if colonna_file and colonna_file not in intestazioni:
+    if colonna_file and indice_file < 0:
         elenco.avvisi.append(("colonna_mancante", colonna_file))
     elif indice_file < 0:
         elenco.avvisi.append(("colonna_file_da_indicare", ""))

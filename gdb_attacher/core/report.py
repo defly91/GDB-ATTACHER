@@ -82,6 +82,7 @@ class ReportFinale:
     errori: int = 0
     righe: list = field(default_factory=list)
     annullata: bool = False
+    errore_commit: str = ""      # commit fallito: nel GDB non è finito nulla
 
     def anomalie(self) -> list:
         """Righe da esportare come «mancanti/errate»."""
@@ -187,15 +188,32 @@ def report_da_candidati(candidati, statistica=None, avvisi=None) -> ReportFinale
     )
 
     if statistica is not None:
+        # «Aggiunti» è ciò che la statistica di scrittura ha contato davvero: un file
+        # sparito fra anteprima ed esecuzione, un annullo o un commit fallito cambiano
+        # l'esito, e il report deve dire la verità sul GDB, non sui candidati preparati.
+        report.aggiunti = int(getattr(statistica, "aggiunti", 0) or 0)
         report.duplicati += getattr(statistica, "duplicati", 0)
         report.saltati += getattr(statistica, "saltati", 0)
         report.errori += len(getattr(statistica, "errori", []) or [])
         report.annullata = bool(getattr(statistica, "annullata", False))
-        for descrizione, errore in (getattr(statistica, "errori", []) or []):
+        for voce in (getattr(statistica, "errori", []) or []):
+            descrizione, errore = voce[0], voce[1]
+            id_parent = voce[2] if len(voce) > 2 else ""
+            campo_foto = voce[3] if len(voce) > 3 else ""
             report.righe.append(RigaReport(
-                tipo="errore", id_parent="", campo_foto="",
+                tipo="errore", id_parent=id_parent, campo_foto=campo_foto,
                 valore=descrizione, percorso_file="", nome_allegato="",
                 motivo=str(errore),
+            ))
+        errore_commit = getattr(statistica, "errore_commit", "") or ""
+        if errore_commit:
+            # Il commit è fallito: nulla è stato scritto nel GDB. Senza questa riga il
+            # report avrebbe mostrato i candidati come se fossero stati scritti.
+            report.errore_commit = str(errore_commit)
+            report.righe.append(RigaReport(
+                tipo="errore", id_parent="", campo_foto="", valore="",
+                percorso_file="", nome_allegato="",
+                motivo=f"commit fallito, nulla è stato scritto: {errore_commit}",
             ))
 
     for avviso in (avvisi or []):
@@ -229,14 +247,26 @@ def scrivi_report_csv(percorso: str, righe, intestazioni=None, traduttore=None,
     cartella = os.path.dirname(os.path.abspath(percorso))
     if cartella:
         os.makedirs(cartella, exist_ok=True)
-    with open(percorso, "w", encoding="utf-8-sig", newline="") as flusso:
-        scrittore = csv.writer(flusso, delimiter=";")
-        scrittore.writerow(list(intestazioni or INTESTAZIONI_CSV))
-        for riga in righe:
-            scrittore.writerow([
-                traduttore(riga.tipo), riga.id_parent, riga.campo_foto, riga.valore,
-                riga.percorso_file, riga.nome_allegato, riga.motivo,
-            ])
+    # Scrittura su file temporaneo + rinomina: se il file di destinazione è aperto in
+    # Excel (Windows), la cartella non è scrivibile o il disco è pieno, non resta un CSV
+    # a metà che sembra valido; l'errore arriva al chiamante con un messaggio leggibile.
+    temporaneo = percorso + ".parziale"
+    try:
+        with open(temporaneo, "w", encoding="utf-8-sig", newline="") as flusso:
+            scrittore = csv.writer(flusso, delimiter=";")
+            scrittore.writerow(list(intestazioni or INTESTAZIONI_CSV))
+            for riga in righe:
+                scrittore.writerow([
+                    traduttore(riga.tipo), riga.id_parent, riga.campo_foto, riga.valore,
+                    riga.percorso_file, riga.nome_allegato, riga.motivo,
+                ])
+        os.replace(temporaneo, percorso)
+    except OSError as errore:
+        try:
+            os.remove(temporaneo)
+        except OSError:
+            pass
+        raise OSError(f"non riesco a scrivere il CSV in «{percorso}»: {errore}") from errore
     return percorso
 
 

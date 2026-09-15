@@ -180,14 +180,22 @@ class IndiceFile:
         self.estensioni = tuple(estensioni or ESTENSIONI)
         self.percorsi = {}   # path relativo minuscolo (sep '/') -> percorso assoluto
         self.nomi = {}       # basename minuscolo -> primo percorso assoluto
-        for radice_abs, _dirs, files in os.walk(self.cartella_base):
+        self.nomi_ambigui = set()   # basename presenti in più cartelle: non risolvibili per nome
+        for radice_abs, dirs, files in os.walk(self.cartella_base):
             rel_radice = os.path.relpath(radice_abs, self.cartella_base).replace("\\", "/")
             if rel_radice.count("/") > 1:      # profondità massima 2
+                dirs[:] = []                   # pota: non scendere oltre
                 continue
             for nome_file in files:
                 rel = nome_file if rel_radice == "." else f"{rel_radice}/{nome_file}"
                 self.percorsi.setdefault(rel.lower(), os.path.join(radice_abs, nome_file))
-                self.nomi.setdefault(nome_file.lower(), os.path.join(radice_abs, nome_file))
+                chiave_nome = nome_file.lower()
+                percorso_nome = os.path.join(radice_abs, nome_file)
+                precedente = self.nomi.setdefault(chiave_nome, percorso_nome)
+                if precedente != percorso_nome:
+                    # Stesso nome in due cartelle diverse: risolvere "per basename" è un
+                    # sorteggio, e allegare la foto sbagliata è peggio che non allegarla.
+                    self.nomi_ambigui.add(chiave_nome)
 
     @classmethod
     def per_cartella(cls, cartella_base: str, estensioni=None) -> "IndiceFile":
@@ -232,13 +240,25 @@ class IndiceFile:
                 trovato = self.percorsi.get((rel + "." + estensione).lower())
                 if trovato:
                     return trovato
-                trovato = self.nomi.get((os.path.basename(rel) + "." + estensione).lower())
+                trovato = self._per_nome((os.path.basename(rel) + "." + estensione).lower())
                 if trovato:
                     return trovato
         # 4) basename indicizzato (cartella giusta, valore senza sottocartella)
         if re.search(r"\s", rel):
             return ""
-        return self.nomi.get(os.path.basename(rel).lower(), "")
+        return self._per_nome(os.path.basename(rel).lower())
+
+    def _per_nome(self, chiave: str) -> str:
+        """Percorso per basename, ma **solo** se il nome identifica un file solo.
+
+        Se lo stesso nome compare in più cartelle (``2023/SS_0001.jpg`` e
+        ``2024/SS_0001.jpg``) la risoluzione per basename dipenderebbe dall'ordine di
+        lettura della cartella: si allegherebbe una foto a caso. Meglio non risolvere:
+        la riga finisce fra i file non trovati e si vede.
+        """
+        if chiave in self.nomi_ambigui:
+            return ""
+        return self.nomi.get(chiave, "")
 
 
 def risolutore_file(cartella_base: str, estensioni=None):
@@ -366,7 +386,7 @@ def punteggio_campo(nome, tipo, valori, cartella_base=None, estensioni=None,
         livello, motivo = "D", "nessun segnale di nome o di valore"
 
     multi_rate = rate(multi)
-    if multi and livello in "ABC":
+    if multi and livello in ("A", "B", "C"):
         motivo += f"; {multi_rate:.0%} valori multipli"
 
     return PunteggioCampo(
