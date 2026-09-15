@@ -72,8 +72,22 @@ OBBLIGATORI = {"metadata.txt", "__init__.py", "LICENSE"}
 if os.path.exists(zip_path):
     os.remove(zip_path)
 
+# Lo zip si costruisce su un file temporaneo e si rinomina solo alla fine: se un
+# controllo fallisce non resta in giro un pacchetto parziale scambiabile per valido.
+zip_temporaneo = zip_path + ".parziale"
+if os.path.exists(zip_temporaneo):
+    os.remove(zip_temporaneo)
+
+
+def _annulla(percorso_temporaneo, percorso_finale):
+    """Rimuove il temporaneo (fallimento) e non tocca l'eventuale zip precedente."""
+    for percorso in (percorso_temporaneo,):
+        if os.path.exists(percorso):
+            os.remove(percorso)
+
+
 inclusi = []
-with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as z:
+with zipfile.ZipFile(zip_temporaneo, "w", zipfile.ZIP_DEFLATED) as z:
     for radice, dirs, files in os.walk(plugin_dir):
         dirs[:] = sorted(d for d in dirs if d not in DIR_ESCLUSE)
         for f in sorted(files):
@@ -96,6 +110,7 @@ with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as z:
                 "        QGIS richiede LICENSE nella radice del plugin.\n"
                 % (licenza, os.path.join(plugin_dir, "LICENSE"))
             )
+            _annulla(zip_temporaneo, zip_path)
             sys.exit(1)
         z.write(sorgente, dest)
         inclusi.append(dest)
@@ -104,11 +119,16 @@ with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as z:
     mancanti = sorted(n for n in OBBLIGATORI if "/".join([nome, n]) not in inclusi)
     if mancanti:
         sys.stderr.write("ERRORE: file obbligatori mancanti nello zip: %s\n" % ", ".join(mancanti))
+        _annulla(zip_temporaneo, zip_path)
         sys.exit(1)
 
 if not inclusi:
     sys.stderr.write("ERRORE: nessun file da impacchettare in %s\n" % plugin_dir)
+    _annulla(zip_temporaneo, zip_path)
     sys.exit(1)
+
+# Tutti i controlli superati: solo ora lo zip prende il nome definitivo.
+os.replace(zip_temporaneo, zip_path)
 
 print("file inclusi nello zip: %d" % len(inclusi))
 print("obbligatori presenti: %s" % ", ".join(sorted(OBBLIGATORI)))
