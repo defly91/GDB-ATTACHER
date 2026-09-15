@@ -1,0 +1,70 @@
+# CI del plugin GDB-Attacher: test automatici senza QGIS ne' GDAL.
+#
+# POSIZIONE: questo workflow va copiato in `.github/workflows/ci.yml` perche'
+# GitHub rifiuta i push di file sotto `.github/workflows/` fatti con un token che
+# ha solo lo scope `repo` (serve anche lo scope `workflow`):
+#   cp ci/github-actions.yml .github/workflows/ci.yml
+# Il file e' tenuto qui finche' il token usato per il push non ha quello scope.
+#
+# I test girano grazie al finto QGIS di tests/conftest.py, quindi non serve
+# installare QGIS/GDAL/osgeo su ubuntu-latest.
+#
+# Lo zip del plugin viene provato solo se esiste gdb_attacher/ (nel ramo di
+# lavoro del plugin): cosi' la CI resta verde finche' il pacchetto non arriva,
+# e da subito dopo controlla che il build funzioni.
+
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: pytest (Python 3.11, finto QGIS)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Imposta Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Installa le dipendenze di test
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+
+      - name: Controlla che QGIS non sia installato (i test devono reggere senza)
+        run: |
+          python - <<'PY'
+          import importlib.util
+          for modulo in ("qgis", "osgeo"):
+              assert importlib.util.find_spec(modulo) is None, modulo
+          print("ne' qgis ne' osgeo presenti: i test useranno il finto QGIS")
+          PY
+
+      - name: Esegui i test
+        run: pytest -q
+
+      - name: Prova lo zip del plugin (solo se gdb_attacher/ esiste)
+        run: |
+          if [ -d gdb_attacher ]; then
+            bash scripts/build_plugin_zip.sh
+            python - <<'PY'
+            import glob, zipfile
+            zip_path = sorted(glob.glob("dist/*.zip"))[-1]
+            nomi = zipfile.ZipFile(zip_path).namelist()
+            assert any(n.endswith("metadata.txt") for n in nomi), nomi
+            assert not any(n.startswith(("tests/", "docs/", ".github/")) for n in nomi)
+            print("zip ok: %s (%d file)" % (zip_path, len(nomi)))
+            PY
+          else
+            echo "gdb_attacher/ non esiste in questo ramo: salto il build dello zip"
+          fi
