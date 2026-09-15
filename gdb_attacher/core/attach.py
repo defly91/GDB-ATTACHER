@@ -27,6 +27,7 @@ from __future__ import annotations
 
 import os
 import shutil
+import unicodedata
 import uuid
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -41,6 +42,10 @@ SUFFISSO_TABELLA_ALLEGATI = "__ATTACH"
 
 #: Nomi accettati per il campo GlobalID del layer sorgente (in ordine di preferenza).
 NOMI_GLOBALID_SORGENTE = ("GlobalID", "GLOBALID", "globalid")
+
+#: Sentinelle di nullità: QGIS consegna i valori nulli come stringa ``"NULL"``, non come
+#: ``None``. Qualunque valore che, ripulito e in maiuscolo, sta qui va trattato come vuoto.
+SENTINELLE_NULL = frozenset({"", "NULL", "NONE", "<NULL>", "N/A"})
 
 #: Mime per estensione. Volutamente più larga dello script click (che copre 4
 #: formati e ricade su octet-stream): qui il mime serve anche all'anteprima HTML.
@@ -151,6 +156,7 @@ class StatisticaScrittura:
     saltati: int = 0
     errori: list = field(default_factory=list)   # lista di (descrizione, errore)
     annullata: bool = False
+    errore_commit: str = ""                      # commit fallito: nulla è stato scritto
 
 
 class EsecuzioneAnnullata(Exception):
@@ -167,17 +173,25 @@ class EsecuzioneAnnullata(Exception):
 
 
 def normalizza_guid(valore) -> str:
-    """GUID in forma canonica interna: **uppercase senza graffe**, o ``""``.
+    """GUID in forma canonica interna: **uppercase senza graffe**, o ``"``.
 
     Porta di ``normalize_guid()`` dello script click: accetta ``{GUID}`` o ``GUID``,
     spazi compresi, e rifiuta il vuoto. Il valore vuoto è il segnale che la feature
     non ha GlobalID e non può ricevere allegati.
+
+    Tratta come vuote anche le sentinelle di nullità (``NULL``, ``None``, ``<NULL>``,
+    ``""``): un campo GlobalID *presente nel layer* ma con valore nullo arriva qui come
+    stringa ``"NULL"``, non come ``None``. Senza questo controllo si scriveva un
+    allegato orfano con ``REL_GLOBALID="{NULL}"``, che ArcGIS non ricollega a nessuna
+    feature.
     """
     if valore is None:
         return ""
     testo = str(valore).strip()
     if testo.startswith("{") and testo.endswith("}"):
         testo = testo[1:-1].strip()
+    if testo.upper() in SENTINELLE_NULL:
+        return ""
     return testo.upper()
 
 
@@ -190,14 +204,17 @@ def guid_con_graffe(guid) -> str:
 def chiave_dedup(rel_globalid, nome_allegato) -> tuple:
     """Chiave di deduplicazione ``(REL_GLOBALID, ATT_NAME)`` del ticket 02.
 
-    Il GUID è normalizzato (graffe/case), il nome allegato resta **verbatim**
-    (ticket 06: nessuna sanificazione, ``O'Brien.JPG`` ≠ ``o'brien.jpg``).
+    Il GUID è normalizzato (graffe/case), il nome allegato è confrontato in forma
+    Unicode **NFC** (``é`` composto e decomposto sono lo stesso file), ma la
+    **maiuscolatura resta significativa**: ``O'Brien.JPG`` e ``o'brien.jpg`` sono due
+    allegati distinti, come da regola "verbatim" del ticket 06 — il nome scritto nel GDB
+    è sempre quello originale.
     Ritorna ``None`` se il GUID parent è nullo: in quel caso non si scrive nulla.
     """
     rel = guid_con_graffe(rel_globalid)
     if not rel:
         return None
-    return (rel, "" if nome_allegato is None else str(nome_allegato))
+    return (rel, unicodedata.normalize("NFC", "" if nome_allegato is None else str(nome_allegato)))
 
 
 def indovina_content_type(percorso: str) -> str:
@@ -209,35 +226,37 @@ def indovina_content_type(percorso: str) -> str:
     return MIME_PER_ESTENSIONE.get(estensione, MIME_FALLBACK)
 
 
-def sembra_filegdb(origine: str) -> bool:
-    """Vero se l'origine del layer punta a un ``.gdb`` (FileGDB/OpenFileGDB).
+def _percorso_dataset(origine) -> str:
+    """Parte "percorso" dell'origine di un layer QGIS, senza i suffissi ``|layername=...``."""
+    return str(origine or "").split("|")[0].strip().rstrip("/\\")
 
-    Accetta le forme che QGIS/GDAL producono davvero: ``.../x.gdb``,
-    ``.../x.gdb|layername=y``, ``.../x.gdb|layerid=0``. Esclude gli altri formati
-    che potrebbero contenere ``.gdb`` per caso (``.gpkg``, ``.shp``, URL).
+
+def sembra_filegdb(origine: str) -> bool:
+    """Vero se l'origine del layer punta a un dataset ``.gdb`` (FileGDB/OpenFileGDB).
+
+    Il ``.gdb`` deve essere **l'ultimo segmento del percorso del dataset**: le forme reali
+    di QGIS/GDAL sono ``.../x.gdb`` e ``.../x.gdb|layername=y``. Un ``.gdb`` che compare a
+    metà percorso non basta: ``.../export.gdb/shp/layer.shp`` è uno shapefile dentro una
+    cartella che si chiama ``.gdb``, e accettarlo portava a verifiche fuorvianti e a un
+    backup proposto sul percorso sbagliato.
     """
-    testo = str(origine or "").strip().lower()
-    if not testo:
+    percorso = _percorso_dataset(origine)
+    if not percorso:
         return False
-    if testo.endswith(".gpkg") or ".gpkg|" in testo:
+    if percorso.lower().endswith((".gpkg", ".shp", ".zip", ".tab", ".json", ".geojson")):
         return False
-    if ".gdb|" in testo:
-        return True
-    if ".gdb/" in testo:
-        return True
-    return testo.split("|")[0].rstrip("/").endswith(".gdb")
+    return percorso.lower().endswith(".gdb")
 
 
 def percorso_gdb(origine: str) -> str:
     """Estrae il percorso del ``.gdb`` dall'origine di un layer (per il backup).
 
-    Ritorna ``""`` se non riconosce un FileGDB.
+    Ritorna ``""`` se l'origine non è un dataset FileGDB. L'ultimo segmento del percorso
+    è la cartella ``.gdb``: ``D:/dati/vecchio.gdb_old/layer.gdb`` → quest'ultimo, non il
+    primo ``.gdb`` trovato nel testo.
     """
-    testo = str(origine or "").split("|")[0].strip()
-    if not sembra_filegdb(testo):
-        return ""
-    posizione = testo.lower().find(".gdb")
-    return testo[: posizione + 4]
+    percorso = _percorso_dataset(origine)
+    return percorso if sembra_filegdb(percorso) else ""
 
 
 def nome_tabella_allegati(nome_layer: str) -> str:
@@ -398,11 +417,35 @@ def carica_chiavi_esistenti(layer_allegati, campi=None) -> set:
     campo_nome = campi.get("ATT_NAME")
     if not campo_rel or not campo_nome:
         return chiavi
-    for feature in layer_allegati.getFeatures():
+    richiesta = _richiesta_solo_chiavi(layer_allegati, campo_rel, campo_nome)
+    features = (layer_allegati.getFeatures(richiesta) if richiesta is not None
+                else layer_allegati.getFeatures())
+    for feature in features:
         chiave = chiave_dedup(feature[campo_rel], feature[campo_nome])
         if chiave:
             chiavi.add(chiave)
     return chiavi
+
+
+def _richiesta_solo_chiavi(layer_allegati, campo_rel: str, campo_nome: str):
+    """Richiesta che legge **solo** ``REL_GLOBALID`` e ``ATT_NAME``, o ``None``.
+
+    Senza limite, ``getFeatures()`` carica anche il campo ``DATA``: costruire l'insieme
+    delle chiavi su una tabella con migliaia di allegati legge gigabyte dal GDB per niente
+    (e l'anteprima lo fa a ogni ricarica). Se l'ambiente non offre ``QgsFeatureRequest``
+    (test con finti, provider esotici) si torna a ``None`` e si legge tutto: la
+    correttezza non dipende dall'ottimizzazione.
+    """
+    try:
+        from qgis.core import QgsFeatureRequest
+
+        campi = layer_allegati.fields()
+        indici = [campi.indexOf(campo_rel), campi.indexOf(campo_nome)]
+        if any(indice < 0 for indice in indici):
+            return None
+        return QgsFeatureRequest().setSubsetOfAttributes(indici, campi)
+    except Exception:
+        return None
 
 
 def scrivi_allegati(layer_allegati, candidati, campi=None, chiavi_esistenti=None,
@@ -461,7 +504,9 @@ def scrivi_allegati(layer_allegati, candidati, campi=None, chiavi_esistenti=None
                     statistica.saltati += 1
                     statistica.errori.append(
                         (f"{getattr(candidato, 'id_parent', '')} · {nome_allegato}",
-                         "GlobalID parent nullo")
+                         "GlobalID parent nullo",
+                         getattr(candidato, "id_parent", ""),
+                         getattr(candidato, "campo_foto", ""))
                     )
                     continue
                 if not nome_allegato:
@@ -477,7 +522,11 @@ def scrivi_allegati(layer_allegati, candidati, campi=None, chiavi_esistenti=None
                     blob = leggi_bytes(percorso)
                 except OSError as errore:
                     statistica.saltati += 1
-                    statistica.errori.append((percorso, str(errore)))
+                    statistica.errori.append(
+                        (percorso, str(errore),
+                         getattr(candidato, "id_parent", ""),
+                         getattr(candidato, "campo_foto", ""))
+                    )
                     continue
 
                 feature = QgsFeature(campi_layer)
@@ -492,10 +541,22 @@ def scrivi_allegati(layer_allegati, candidati, campi=None, chiavi_esistenti=None
                     chiavi.add(chiave)
                     statistica.aggiunti += 1
                 else:
-                    statistica.errori.append((percorso, "addFeature() ha restituito False"))
+                    statistica.errori.append(
+                        (percorso, "addFeature() ha restituito False",
+                         getattr(candidato, "id_parent", ""),
+                         getattr(candidato, "campo_foto", ""))
+                    )
     except EsecuzioneAnnullata:
         # `with edit(...)` esce con eccezione → QGIS fa rollback: nulla è stato scritto.
         statistica.annullata = True
+        statistica.aggiunti = 0
+    except Exception as errore:  # noqa: BLE001 — QgsEditError sul commit, MemoryError, provider
+        # Il commit è fallito (GDB bloccato da ArcGIS, disco pieno, blob rifiutato) oppure
+        # il lotto non è entrato in memoria: `with edit(...)` ha già fatto rollback, quindi
+        # ciò che risultava aggiunto non esiste nel GDB. Senza questa cattura l'eccezione
+        # usciva da uno slot Qt (traceback, report perso, layer lasciato in modifica).
+        statistica.aggiunti = 0
+        statistica.errore_commit = f"{type(errore).__name__}: {errore}"
 
     return statistica
 
@@ -528,5 +589,16 @@ def backup_gdb(percorso_gdb_originale: str, destinazione: str = None, callback=N
         raise OSError(f"destinazione già esistente: {destinazione}")
     if callback is not None:
         callback(destinazione)
-    shutil.copytree(origine, destinazione)
+    # Copia prima su una cartella temporanea e rinomina solo a copia riuscita: se il disco
+    # si riempie a metà, non resta un backup parziale con il nome definitivo (che al
+    # tentativo successivo farebbe fallire tutto con "destinazione già esistente").
+    temporanea = destinazione + ".parziale"
+    try:
+        if os.path.exists(temporanea):
+            shutil.rmtree(temporanea, ignore_errors=True)
+        shutil.copytree(origine, temporanea)
+        os.rename(temporanea, destinazione)
+    except Exception:
+        shutil.rmtree(temporanea, ignore_errors=True)
+        raise
     return destinazione
