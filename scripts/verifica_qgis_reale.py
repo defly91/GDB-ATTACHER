@@ -103,15 +103,22 @@ def _6():
     app = QApplication.instance() or QApplication(sys.argv)
     iface = MagicMock()
     dlg = WizardAllegati(iface, None)
-    passi = getattr(dlg, "passi", None) or getattr(dlg, "_passi", None)
-    if passi is None:
-        # Il wizard costruisce le pagine dentro di sé: contarle dalle Qt è la prova
-        # che l'interfaccia è stata montata per davvero.
-        passi = [dlg.page(i) for i in range(dlg.pageIds().__len__())] \
-            if hasattr(dlg, "pageIds") else []
+    pagine = dlg.pageIds()
+    motivi = []
+    for indice, pid in enumerate(pagine, start=1):
+        pagina = dlg.page(pid)
+        try:
+            # Qt chiama `isComplete()` a ogni cambio di stato del wizard e `title()` per
+            # l'intestazione: sono le due API che una pagina sbagliata fa saltare per prime.
+            pagina.title()
+            pagina.isComplete()
+        except Exception as errore:  # noqa: BLE001
+            motivi.append(f"pagina {indice}: {type(errore).__name__}: {errore}")
     titolo = dlg.windowTitle() if hasattr(dlg, "windowTitle") else ""
     dlg.close()
-    return f"finestra creata, titolo='{titolo}', pagine={len(passi)}"
+    if motivi:
+        raise AssertionError("; ".join(motivi))
+    return f"finestra creata, titolo='{titolo}', pagine={len(pagine)} tutte inizializzabili"
 
 
 print("=" * 68)

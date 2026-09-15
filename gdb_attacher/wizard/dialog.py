@@ -1106,7 +1106,7 @@ class PaginaEsegui(PaginaBase):
             else:
                 self.esito.setText(self.t(
                     "esito_scrittura",
-                    aggiunti=getattr(self.w.report, "aggiunti", statistica.aggiunti),
+                    aggiunti=self.w.report.aggiunti,
                     duplicati=self.w.report.duplicati,
                     mancanti=self.w.report.mancanti,
                     saltati=self.w.report.saltati,
