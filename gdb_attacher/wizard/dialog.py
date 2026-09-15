@@ -242,7 +242,7 @@ class PaginaVerifica(PaginaBase):
             (self.t("ctrl_attach"), self._esito(esito.tabella.presente),
              attach.nome_tabella_allegati(layer.name())),
             (self.t("ctrl_campi_attach"), self._esito(esito.tabella.completa),
-             "—" if esito.tabella.completa else ", ".join(esito.tabella.mancanti)),
+             ", ".join(esito.tabella.mancanti) or self.t("nessuno")),
         ]
         if any(problema.codice == "locale_non_scrivibile" for problema in esito.layer.problemi):
             righe.append((self.t("ctrl_scrittura"), self._esito(False), ""))
@@ -260,27 +260,41 @@ class PaginaVerifica(PaginaBase):
         return self.t("esito_ok") if ok else self.t("esito_ko")
 
     def _testo_blocco(self, esito):
-        """Messaggio di blocco, con il rimando ad ArcGIS Pro quando c'entra la tabella."""
+        """Messaggio di blocco, con il caso distinto della tabella allegati.
+
+        La tabella allegati non passa da ``esito.layer.problemi``: il core la
+        descrive con ``EsitoTabellaAllegati`` (presente, campi mancanti). Qui si
+        distingue «tabella assente» da «tabella incompleta con l'elenco dei campi
+        mancanti» (SPEC §12.6) invece di lasciare il solo rimando generico ad
+        ArcGIS Pro; i codici `attach_*` restano nella mappa ``TESTI_PROBLEMA``,
+        così se un domani il core li mettesse fra i problemi del layer il testo
+        comparirebbe comunque una volta sola.
+        """
         pezzi = [self.t("verifica_bloccata")]
-        nome_tabella = attach.nome_tabella_allegati(
-            self.w.layer_sorgente.name() if self.w.layer_sorgente else ""
-        )
+        nome_sorgente = self.w.layer_sorgente.name() if self.w.layer_sorgente else ""
+        nome_tabella = attach.nome_tabella_allegati(nome_sorgente)
+        campi = ", ".join(esito.tabella.mancanti) or self.t("nessuno")
+        codici_layer = {problema.codice for problema in esito.layer.problemi}
         for problema in esito.layer.problemi:
             chiave = strings.TESTI_PROBLEMA.get(problema.codice)
             if not chiave:
                 continue
             pezzi.append(self.t(
                 chiave,
-                layer=self.w.layer_sorgente.name() if self.w.layer_sorgente else "",
+                layer=nome_sorgente,
                 origine=problema.dettaglio or "—",
                 tabella=nome_tabella,
-                campi=", ".join(esito.tabella.mancanti) or "—",
+                campi=campi,
                 come=self.t("come_abilitare"),
             ))
-        if not esito.tabella.presente or not esito.tabella.completa:
-            pezzi.append(attach.messaggio_abilitazione(
-                self.w.layer_sorgente.name() if self.w.layer_sorgente else "", self.w.lingua
-            ))
+        if not esito.tabella.presente and "attach_assente" not in codici_layer:
+            pezzi.append(self.t("err_attach_assente", tabella=nome_tabella,
+                                come=self.t("come_abilitare")))
+        elif not esito.tabella.completa and "attach_incompleta" not in codici_layer:
+            pezzi.append(self.t("err_attach_incompleta", tabella=nome_tabella, campi=campi,
+                                come=self.t("come_abilitare")))
+        if not esito.tabella.completa:
+            pezzi.append(attach.messaggio_abilitazione(nome_sorgente, self.w.lingua))
         return "\n\n".join(pezzi)
 
     def isComplete(self):  # noqa: N802
