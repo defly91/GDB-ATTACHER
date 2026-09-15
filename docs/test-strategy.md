@@ -18,20 +18,23 @@ La strategia copre i primi due punti con i **fake** e delega il terzo a una **ch
 
 | Livello | Dove gira | Cosa copre | Marcatore pytest |
 |---|---|---|---|
-| **unit** (fake QGIS) | CI, ogni push | logica pura: euristiche di discovery, naming, collisioni, deduplica, risoluzione dei file, parser CSV, messaggi, costruzione del report | `unit` |
+| **unit** (fake QGIS) | CI, ogni push | logica pura: euristiche di discovery, naming, collisioni, deduplica, risoluzione dei file, parser CSV, messaggi, costruzione del report **e i percorsi del wizard** (7 pagine montate sui widget finti: scelta layer, verifica bloccante, anteprima, annullamento, errori) | `unit` |
 | **packaging** | CI, ogni push | build dello zip, contenuto del pacchetto, coerenza di `metadata.txt` | `packaging` |
 | **richiede_qgis** | QGIS vero, a mano | applicazione dello stile QML, apertura del form, azioni, anteprima HTML, formula QgsExpression | `richiede_qgis` |
 | **richiede_gdb** | GDB campione + QGIS vero, a mano | scrittura reale dei blob nella tabella allegati, comportamento su GDB creato da ArcGIS Pro | `richiede_gdb` |
 
-I marcatori sono dichiarati in `pyproject.toml` (`--strict-markers`): un test che usa un marcatore non dichiarato **fallisce**, così non si scrivono test "senza livello". In CI girano solo i primi due; `richiede_qgis` e `richiede_gdb` sono pensati per essere selezionati a mano:
+I marcatori sono dichiarati in `pyproject.toml` (`--strict-markers`): un test che usa un marcatore **non dichiarato** fallisce in raccolta, quindi non si inventano livelli a metà. Attenzione a non leggere quella regola come "nessun test senza livello": il marcatore è dichiarato a livello di file (`pytestmark`) e **non** è obbligatorio, quindi la suite del core (`gdb_attacher/tests/`) non lo porta e resta fuori da `-m unit`.
+
+Oggi la selezione dà questo (numeri verificati, `352` test in totale):
 
 ```bash
-pytest -q -m unit            # solo logica pura (velocissimo)
-pytest -q -m packaging       # solo build e pacchetto
-pytest -q -m "not unit and not packaging"   # solo i test che richiedono QGIS/GDB
+pytest -q -m unit            # 191 test: logica pura + percorsi del wizard (velocissimo)
+pytest -q -m packaging       # 11 test: build dello zip e pacchetto
+pytest -q -m "not unit and not packaging"   # 150 test: suite del core in gdb_attacher/tests/
+pytest -q                    # 352 test, 0 saltati
 ```
 
-Oggi i marcatori `richiede_qgis` e `richiede_gdb` **non hanno ancora test**: quei casi sono la checklist manuale più sotto (si scriveranno come test automatici quando ci sarà un ambiente con QGIS vero). La selezione qui sopra quindi non raccoglie nulla — serve a fissare dove andranno quei test.
+I marcatori `richiede_qgis` e `richiede_gdb` **non hanno ancora test**: quei casi sono la checklist manuale più sotto (si scriveranno come test automatici quando ci sarà un ambiente con QGIS vero). La selezione `-m richiede_qgis` quindi non raccoglie nulla — serve a fissare dove andranno quei test.
 
 ## I fake: come funziona
 
@@ -50,7 +53,9 @@ Cosa c'è dentro (`tests/fake_qgis.py`):
 - **`FakeProject`** — `QgsProject.instance()` singleton con `mapLayers()`, `mapLayersByName()`, `addMapLayer()`.
 - **`edit(layer)`** — context manager che **fa rollback** se il blocco solleva: permette di testare "annulla = non si è scritto nulla".
 - **`NULL`, `QByteArray`** — `QByteArray` si confronta direttamente con `bytes`, quindi si verifica il round-trip dei blob senza GDAL.
-- **dialoghi finti** — `QMessageBox`, `QInputDialog`, `QFileDialog` non aprono nulla: **registrano** la chiamata in `REGISTRO_DIALOGHI` e restituiscono risposte preimpostabili (`risposte.item`, `risposte.directory`, ...). È così che si testano i percorsi del wizard e i messaggi d'errore.
+- **dialoghi finti** — `QMessageBox`, `QInputDialog`, `QFileDialog` non aprono nulla: **registrano** la chiamata in `REGISTRO_DIALOGHI` (tipo, titolo, testo) e restituiscono risposte preimpostabili (`risposte.item`, `risposte.directory`, ...). È così che si testano i percorsi del wizard e i messaggi d'errore.
+- **widget finti con segnali veri** — `QWizard`, `QWizardPage`, `QTableWidget` (+`QTableWidgetItem`), `QComboBox`, `QProgressBar`, `QLabel`, `QLineEdit`, `QPushButton`, `QCheckBox`, `QRadioButton`, `QGroupBox`, i layout e `QApplication` hanno **stato vero** (testo, voci, celle, titoli, abilitazione, visibilità) e **segnali veri** (`connect`/`emit`, con `blockSignals` rispettato). `QApplication.processEvents()` incrementa un contatore invece di girare la loop; i cursori di attesa si possono leggere (`QApplication.overrideCursor()`). Senza questi, `WizardAllegati(...)` non era nemmeno istanziabile (`AttributeError: 'function' object has no attribute 'connect'`) e nessun percorso del wizard era coperto.
+- **`FakeProject.mapLayer(id)` / `FakeLayerTree.findLayer(id)`** — come QGIS: restituiscono il layer con quell'id (o `None`). `PaginaLayer` ci si appoggia per sapere quale layer è selezionato.
 - **stub automatici** — un nome di `qgis.*` che i fake non conoscono viene generato al volo: un import non previsto non fa fallire la raccolta dei test.
 
 ### Fixture disponibili (da `tests/conftest.py`)
@@ -65,7 +70,7 @@ Cosa c'è dentro (`tests/fake_qgis.py`):
 | `cartella_foto` | cartella con file finti: `SS_0001.jpg`, `ACQ_2.png`, `documento.pdf`, `foto d'interno.jpg` e `contatore/ACQ_1.jpg` |
 | `carica_modulo` | importa un file `.py` del plugin per percorso (il pacchetto non è installato) |
 | `dialoghi` / `risposte_dialoghi` | registro dei dialoghi aperti e code delle risposte |
-| `stato_qgis_pulito` (autouse) | azzera progetto, dialoghi, risposte e registro sorgenti prima e dopo ogni test |
+| `stato_qgis_pulito` (autouse) | azzera progetto, dialoghi, risposte, registro sorgenti e i cursori/contatori di `QApplication` prima e dopo ogni test |
 
 Isolamento: nessun test scrive su file del repo, i dati stanno in `tmp_path`, e `FakeProject` viene azzerato a ogni test.
 
@@ -75,22 +80,39 @@ Per simulare "manca la tabella allegati" o "il layer non è valido" non serve al
 
 ## Cosa gira in CI
 
-`.github/workflows/ci.yml` (in questo ramo: `ci/github-actions.yml`, vedi sotto) su `ubuntu-latest`, Python 3.11:
+``.github/workflows/ci.yml` (in questo ramo il file è versionato come `ci/github-actions.yml` e va copiato lì: vedi `docs/pubblicazione-qgis.md`) su `ubuntu-latest`, Python 3.11:
 
 1. `pip install -r requirements-dev.txt` (solo pytest: nessun GDAL, nessun QGIS);
 2. un **guard**: verifica che `qgis` e `osgeo` **non** siano importabili, così i test non possono "passare per sbaglio" usando un QGIS vero;
 3. `pytest -q`;
-4. lo zip del plugin, **solo se `gdb_attacher/` esiste** in quel ramo: lo costruisce e controlla che dentro ci siano `metadata.txt` e non `tests/`, `docs/`, `.github/`.
+4. lo zip del plugin: lo costruisce e controlla che dentro ci siano `metadata.txt` e non `tests/`, `docs/`, `.github/` (nel workflow il passo è condizionato all'esistenza di `gdb_attacher/`, che in questo ramo c'è).
 
-Copertura automatica attuale in questo ramo: **71 test** (fake QGIS + contratto v1 di naming/deduplica + packaging + prototipo 05), **3 saltati** perché richiedono `gdb_attacher/`.
+Copertura automatica attuale in questo ramo: **352 test verdi, 0 saltati** — 191 con marcatore `unit` (fake QGIS, contratto v1/v1-sul-plugin, prototipo 05, **wizard**), 11 `packaging` (build dello zip e pacchetto), 150 nella suite del core (`gdb_attacher/tests/`, senza marcatore). QGIS e GDAL non servono: i moduli `qgis.*` sono quelli finti.
+
+### Cosa coprono i test del wizard
+
+Il wizard (`gdb_attacher/wizard/dialog.py`) viene **istanziato** nei test, con le sette pagine montate sui widget finti:
+
+| File | Cosa difende |
+|---|---|
+| `tests/test_wizard_montaggio.py` | le 7 pagine esistono (IT ed EN), testi dei pulsanti, segnali dei widget finti |
+| `tests/test_wizard_pagina_layer.py` | si scelgono solo layer FileGDB, la tabella `__ATTACH` è esclusa, la scelta non si perde tornando indietro |
+| `tests/test_wizard_verifica.py` | messaggi di blocco distinti: tabella allegati assente vs incompleta con l'elenco dei campi |
+| `tests/test_wizard_conteggi.py` | anteprima e riepilogo contano gli stessi numeri (i «saltati» non si sommano due volte) |
+| `tests/test_wizard_chiavi_stantie.py` | la cache delle chiavi esistenti non sopravvive a un'esecuzione: rieseguire non duplica gli allegati |
+| `tests/test_wizard_annullamento.py` | durante il batch i pulsanti sono bloccati e chiudere = chiedere l'annullo; annullare non lascia righe |
+| `tests/test_wizard_robustezza.py` | un errore imprevisto si mostra tradotto e non porta via il report; commit fallito = «nulla è stato scritto» |
+| `tests/test_wizard_csv.py` | le chiavi del CSV assenti dal layer sono avvisate a video |
+| `tests/test_wizard_i18n.py` | niente stringhe italiane nel codice, evidenziazione e messaggi tradotti |
+| `tests/test_wizard_stringhe.py` | dizionario IT/EN allineato: chiavi, segnaposto, nessuna chiave morta |
 
 ### Contratto v1 vs implementazione
 
-`gdb_attacher/` è scritto in un ramo di lavoro diverso da questo: qui non c'è codice del plugin da esercitare. `tests/oracolo_v1.py` è quindi **l'oracolo eseguibile** del contratto (naming nelle tre modalità, deduplica, collisioni) e `tests/test_contratto_v1.py` lo fa girare sul finto QGIS. Quando il pacchetto arriverà, i `CASI_NAMING` di quel file sono la specifica da far combaciare: i casi vanno puntati anche sulle funzioni reali del plugin, non solo sull'oracolo.
+`gdb_attacher/` è **in questo ramo** e i test lo esercitano: `tests/oracolo_v1.py` è l'**oracolo eseguibile** del contratto (naming nelle tre modalità, deduplica, collisioni), `tests/test_contratto_v1.py` lo fa girare sul finto QGIS e `tests/test_contratto_plugin.py` punta gli stessi `CASI_NAMING` sulle funzioni reali del plugin. Il wizard completo è coperto dai `tests/test_wizard_*.py` (tabella qui sopra); quello che resta a mano è la resa in QGIS vero (form, anteprima HTML, QML, azioni sui file).
 
 ## Cosa NON si può testare senza un GDB reale
 
-Da fare **a mano**, in QGIS, su un GDB campione:
+Da fare **a mano**, in QGIS, su un GDB campione. Attenzione: la *logica* del wizard (scelte, conteggi, blocco, annullamento, deduplica) è coperta dai test con il finto QGIS; qui resta la parte che dipende da QGIS/GDAL veri:
 
 - scrittura reale dei blob nella tabella allegati (con il fake si verifica la logica, non il driver OGR);
 - che ArcGIS Pro **riconosca** gli allegati scritti da QGIS (relazione `__ATTACHREL`, metadati di sistema);
@@ -205,3 +227,5 @@ Per ogni caso: esito (ok / ko / non verificato), versione di QGIS, se il GDB ha 
 - `.scratch/gdb-attacher-plugin/issues/02-creare-attach-senza-rompere-gdb.md` — schema dei 6 campi e perché il plugin non crea la tabella
 - `.scratch/gdb-attacher-plugin/issues/06-naming-formula-vs-originale-csv.md` — naming, multi-valore, collisioni, apice
 - `prototype/05-field-discovery/` — euristica di discovery ora esercitata dai test sui fake
+- `tests/fake_qgis.py` — il finto QGIS (layer, feature, dialoghi e widget Qt con segnali veri)
+- `tests/test_wizard_*.py` — i percorsi del wizard montati sui finti

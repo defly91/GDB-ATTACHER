@@ -91,10 +91,25 @@ class PaginaBase(QWizardPage):
             for colonna, valore in enumerate(celle):
                 testo = "" if valore is None else str(valore)
                 elemento = QTableWidgetItem(testo)
-                if testo and "mancante" in testo.lower():
+                if testo and self.t("marcatore_errore").lower() in testo.lower():
                     elemento.setForeground(Qt.red)
                 tabella.setItem(numero, colonna, elemento)
         tabella.resizeColumnsToContents()
+
+    # -------------------------------------------------- dialoghi di file
+
+    def _filtro_csv(self, tutti=False):
+        """Filtro dei dialoghi file CSV, tradotto (il filtro lo legge l'utente).
+
+        In italiano resta esattamente quello di prima; in inglese il filtro non
+        resta in italiano dentro un'interfaccia tradotta.
+        """
+        filtro = self.t("filtro_csv")
+        return f"{filtro};;{self.t('filtro_tutti_i_file')}" if tutti else filtro
+
+    def _filtro_csv_export(self):
+        """Filtro del salvataggio del report CSV."""
+        return self.t("filtro_csv_export")
 
 
 class PaginaLayer(PaginaBase):
@@ -127,14 +142,51 @@ class PaginaLayer(PaginaBase):
         disposizione.addStretch(1)
 
     def ricarica(self):
-        """Ripopola l'elenco con i soli layer vettoriali su FileGDB."""
-        self.combo.clear()
-        for layer in self.w.layer_filegdb():
-            self.combo.addItem(f"{layer.name()}  —  {os.path.basename(attach.percorso_gdb(layer.source()) or layer.source())}",
-                               layer.id())
+        """Ripopola l'elenco con i soli layer vettoriali su FileGDB.
+
+        La scelta non si perde: tornando indietro dal passo 2 (o premendo
+        «Aggiorna») il combo si riempie di nuovo ma resta selezionato lo stesso
+        layer. Senza questo, la scelta cadeva sul primo della lista e si
+        proseguiva scrivendo su un altro GDB.
+        """
+        scelto = self._id_da_riselezionare()
+        self.combo.blockSignals(True)
+        try:
+            self.combo.clear()
+            for layer in self.w.layer_filegdb():
+                self.combo.addItem(
+                    f"{_nome(layer)}  —  "
+                    f"{os.path.basename(attach.percorso_gdb(layer.source()) or layer.source())}",
+                    layer.id(),
+                )
+            indice = self.combo.findData(scelto) if scelto else -1
+            if indice < 0 and self.combo.count():
+                indice = 0
+            self.combo.setCurrentIndex(indice)
+        finally:
+            self.combo.blockSignals(False)
         self.etichetta_vuoto.setVisible(self.combo.count() == 0)
         self.bottone_aggiorna.setEnabled(True)
         self._aggiorna_origine()
+        self.completeChanged.emit()
+
+    def _id_da_riselezionare(self):
+        """Id del layer da riselezionare dopo il ripopolamento.
+
+        Prima la scelta corrente del combo, poi il layer su cui il wizard sta
+        lavorando: la selezione non deve mai ``cadere`` su un altro layer.
+        """
+        if self.combo.count():
+            corrente = self.combo.currentData()
+            if corrente:
+                return corrente
+        layer = getattr(self.w, "layer_sorgente", None)
+        if layer is not None:
+            try:
+                return layer.id()
+            except Exception:
+                return None
+        return None
 
     def initializePage(self):  # noqa: N802
         self.ricarica()
@@ -164,6 +216,9 @@ class PaginaLayer(PaginaBase):
         self.w.candidati = []
         self.w.report = None
         self.w.eseguito = False
+        # Cambiare layer sorgente cambia anche la tabella allegati: le chiavi lette
+        # prima non valgono più (altrimenti si deduplica contro la tabella sbagliata).
+        self.w.pagina_naming.invalida_cache_chiavi()
         return True
 
 
@@ -196,6 +251,9 @@ class PaginaVerifica(PaginaBase):
             return
         esito = attach.verifica_completa(self.w.progetto, layer)
         self.w.esito = esito
+        # Le verifiche possono aver agganciato un'altra tabella allegati: le chiavi
+        # in cache vanno rilette (o buttate) alla prossima anteprima.
+        self.w.pagina_naming.invalida_cache_chiavi()
 
         righe = [
             (self.t("ctrl_filegdb"), self._esito(esito.layer.e_filegdb),
@@ -205,7 +263,7 @@ class PaginaVerifica(PaginaBase):
             (self.t("ctrl_attach"), self._esito(esito.tabella.presente),
              attach.nome_tabella_allegati(layer.name())),
             (self.t("ctrl_campi_attach"), self._esito(esito.tabella.completa),
-             "—" if esito.tabella.completa else ", ".join(esito.tabella.mancanti)),
+             ", ".join(esito.tabella.mancanti) or self.t("nessuno")),
         ]
         if any(problema.codice == "locale_non_scrivibile" for problema in esito.layer.problemi):
             righe.append((self.t("ctrl_scrittura"), self._esito(False), ""))
@@ -223,27 +281,41 @@ class PaginaVerifica(PaginaBase):
         return self.t("esito_ok") if ok else self.t("esito_ko")
 
     def _testo_blocco(self, esito):
-        """Messaggio di blocco, con il rimando ad ArcGIS Pro quando c'entra la tabella."""
+        """Messaggio di blocco, con il caso distinto della tabella allegati.
+
+        La tabella allegati non passa da ``esito.layer.problemi``: il core la
+        descrive con ``EsitoTabellaAllegati`` (presente, campi mancanti). Qui si
+        distingue «tabella assente» da «tabella incompleta con l'elenco dei campi
+        mancanti» (SPEC §12.6) invece di lasciare il solo rimando generico ad
+        ArcGIS Pro; i codici `attach_*` restano nella mappa ``TESTI_PROBLEMA``,
+        così se un domani il core li mettesse fra i problemi del layer il testo
+        comparirebbe comunque una volta sola.
+        """
         pezzi = [self.t("verifica_bloccata")]
-        nome_tabella = attach.nome_tabella_allegati(
-            self.w.layer_sorgente.name() if self.w.layer_sorgente else ""
-        )
+        nome_sorgente = self.w.layer_sorgente.name() if self.w.layer_sorgente else ""
+        nome_tabella = attach.nome_tabella_allegati(nome_sorgente)
+        campi = ", ".join(esito.tabella.mancanti) or self.t("nessuno")
+        codici_layer = {problema.codice for problema in esito.layer.problemi}
         for problema in esito.layer.problemi:
             chiave = strings.TESTI_PROBLEMA.get(problema.codice)
             if not chiave:
                 continue
             pezzi.append(self.t(
                 chiave,
-                layer=self.w.layer_sorgente.name() if self.w.layer_sorgente else "",
+                layer=nome_sorgente,
                 origine=problema.dettaglio or "—",
                 tabella=nome_tabella,
-                campi=", ".join(esito.tabella.mancanti) or "—",
+                campi=campi,
                 come=self.t("come_abilitare"),
             ))
-        if not esito.tabella.presente or not esito.tabella.completa:
-            pezzi.append(attach.messaggio_abilitazione(
-                self.w.layer_sorgente.name() if self.w.layer_sorgente else "", self.w.lingua
-            ))
+        if not esito.tabella.presente and "attach_assente" not in codici_layer:
+            pezzi.append(self.t("err_attach_assente", tabella=nome_tabella,
+                                come=self.t("come_abilitare")))
+        elif not esito.tabella.completa and "attach_incompleta" not in codici_layer:
+            pezzi.append(self.t("err_attach_incompleta", tabella=nome_tabella, campi=campi,
+                                come=self.t("come_abilitare")))
+        if not esito.tabella.completa:
+            pezzi.append(attach.messaggio_abilitazione(nome_sorgente, self.w.lingua))
         return "\n\n".join(pezzi)
 
     def isComplete(self):  # noqa: N802
@@ -312,6 +384,7 @@ class PaginaDiscovery(PaginaBase):
         self.completeChanged.emit()
 
     def scansiona(self):
+        """Analizza i campi foto. Un errore imprevisto si mostra, non esce come traceback."""
         cartella = self.cartella.text().strip()
         if cartella and not os.path.isdir(cartella):
             QMessageBox.warning(self, self.t("attenzione_titolo"),
@@ -320,10 +393,19 @@ class PaginaDiscovery(PaginaBase):
         self.w.cartella_base = cartella
         self.stato.setText(self.t("scansione_in_corso"))
         QApplication.processEvents()
-        self.w.righe_discovery = discovery.suggerisci_campi(self.w.layer_sorgente, cartella)
+        try:
+            self.w.righe_discovery = discovery.suggerisci_campi(self.w.layer_sorgente, cartella)
+        except Exception as errore:
+            # La tabella precedente resta: si perde la scansione, non il passo.
+            self.w.righe_discovery = []
+            self.stato.setText(self.t("errore_scansione", errore=errore))
+            self.stato.setStyleSheet("color:#a00")
+            self.completeChanged.emit()
+            return
         righe = [
             (t_livello(r.livello, self.w.lingua), r.campo, r.tipo, f"{r.n_non_null}/{r.n_valori}",
-             f"{r.esiste_rate:.0%}", f"{r.multi_rate:.0%}", "sì" if r.nome_match else "—",
+             f"{r.esiste_rate:.0%}", f"{r.multi_rate:.0%}",
+             self.t("sì") if r.nome_match else "—",
              r.motivo, " · ".join(r.esempi))
             for r in self.w.righe_discovery
         ]
@@ -442,7 +524,7 @@ class PaginaNaming(PaginaBase):
 
         # --- formula
         self.formula = QLineEdit()
-        self.formula.setPlaceholderText('@stem || "_" || "CODICE" || @ext')
+        self.formula.setPlaceholderText(self.t("formula_esempio"))
         self.formula.textChanged.connect(lambda _t: self.completeChanged.emit())
         self.aiuto_formula = QLabel(self.t("aiuto_formula"))
         self.aiuto_formula.setWordWrap(True)
@@ -494,6 +576,7 @@ class PaginaNaming(PaginaBase):
 
         # --- anteprima
         self._cache_chiavi = None
+        self._cache_chiavi_layer = None
         self.bottone_anteprima = QPushButton(self.t("aggiorna_anteprima"))
         self.bottone_anteprima.clicked.connect(self.aggiorna_anteprima)
         self.etichetta_anteprima = QLabel(self.t("anteprima_5"))
@@ -544,7 +627,8 @@ class PaginaNaming(PaginaBase):
     def prova_formula(self):
         errore, avviso = naming.verifica_formula(self.formula.text(), self.w.layer_sorgente)
         if errore:
-            QMessageBox.warning(self, self.t("formula_non_valida", errore=errore), errore)
+            QMessageBox.warning(self, self.t("formula_non_valida_titolo"),
+                                self.t("formula_non_valida", errore=errore))
         elif avviso:
             QMessageBox.information(self, self.t("attenzione_titolo"), avviso)
         else:
@@ -555,7 +639,8 @@ class PaginaNaming(PaginaBase):
 
     def scegli_csv(self):
         percorso, _filtro = QFileDialog.getOpenFileName(
-            self, self.t("csv_file"), self.csv_percorso.text() or "", "CSV (*.csv *.txt);;Tutti i file (*)"
+            self, self.t("csv_file"), self.csv_percorso.text() or "",
+            self._filtro_csv(tutti=True),
         )
         if percorso:
             self.csv_percorso.setText(percorso)
@@ -636,18 +721,40 @@ class PaginaNaming(PaginaBase):
     def chiavi_tabella_esistenti(self, forza: bool = False):
         """Coppie ``(REL_GLOBALID, ATT_NAME)`` già nella tabella allegati (deduplica).
 
-        La lettura è in cache: la tabella non cambia mentre si costruisce l'anteprima,
-        e su tabelle grandi una passata sola è già abbastanza.
+        La lettura è in cache — su tabelle grandi una passata sola è già abbastanza —
+        ma la cache **non** può sopravvivere a un'esecuzione: il batch scrive nella
+        tabella, quindi il giro successivo (l'utente torna al naming e riesegue)
+        riscriverebbe le stesse righe. Si invalida quando cambia il layer allegati
+        e si rilegge con ``forza=True``.
         """
-        if self._cache_chiavi is not None and not forza:
-            return self._cache_chiavi
         layer_allegati = getattr(self.w.esito, "layer_allegati", None) if self.w.esito else None
+        if not forza and self._cache_chiavi is not None \
+                and self._cache_chiavi_layer is layer_allegati:
+            return self._cache_chiavi
         if layer_allegati is None:
-            self._cache_chiavi = set()
+            self._cache_chiavi, self._cache_chiavi_layer = set(), None
             return self._cache_chiavi
         campi = attach.risolvi_campi_allegati(layer_allegati)[0]
         self._cache_chiavi = attach.carica_chiavi_esistenti(layer_allegati, campi)
+        self._cache_chiavi_layer = layer_allegati
         return self._cache_chiavi
+
+    def invalida_cache_chiavi(self):
+        """Butta la cache delle chiavi: la prossima anteprima rilegge la tabella.
+
+        Si chiama quando cambia il layer sorgente (→ tabella allegati) o quando il
+        batch ha appena scritto: tenere la cache vecchia farebbe riscrivere righe
+        già presenti.
+        """
+        self._cache_chiavi = None
+        self._cache_chiavi_layer = None
+        self.w.chiavi_esistenti = set()
+
+    def ricarica_chiavi_esistenti(self):
+        """Rilegge la tabella allegati e riallinea ``w.chiavi_esistenti``."""
+        esistenti = self.chiavi_tabella_esistenti(forza=True)
+        self.w.chiavi_esistenti = set(esistenti)
+        return esistenti
 
     def costruisci_candidati(self, salva=True):
         """Costruisce i candidati secondo modalità, campi, cartella base e CSV."""
@@ -679,6 +786,20 @@ class PaginaNaming(PaginaBase):
             w.chiavi_esistenti = set(esistenti)
         return candidati
 
+    def ricalcola_collisioni(self):
+        """Ricompone gli stati dei candidati con le chiavi rilette dalla tabella.
+
+        Quello che si scrive e quello che dice il report devono venire dagli stessi
+        numeri: se la tabella è cambiata dopo l'anteprima (un giro precedente, un
+        allegato aggiunto da ArcGIS), i candidati già presenti diventano
+        ``duplicato`` *prima* della scrittura, non dopo.
+        """
+        esistenti = self.ricarica_chiavi_esistenti()
+        self.w.candidati = naming.risolvi_collisioni(
+            self.w.candidati, esistenti, self.comportamento_rinomina()
+        )
+        return self.w.candidati
+
     def aggiorna_anteprima(self):
         try:
             candidati = self.costruisci_candidati()
@@ -698,13 +819,21 @@ class PaginaNaming(PaginaBase):
         self._riempi(self.tabella, righe)
 
         conteggi = anteprima.conteggi
-        self.conteggi.setText("   ".join([
+        pezzi = [
             self.t("totale_ok", n=conteggi["ok"] + conteggi["collisione"]),
             self.t("atto_totale_duplicati", n=conteggi["duplicato"]),
             self.t("totale_missing", n=conteggi["missing"] + conteggi["file_ignoto"]),
             self.t("totale_collisioni", n=conteggi["collisione"]),
-            self.t("totale_saltati", n=conteggi["saltati"] + conteggi["salta"]),
-        ]))
+            # `saltati` è già la somma del core (vuoto + salta + …): non risommarlo.
+            self.t("totale_saltati", n=conteggi["saltati"]),
+        ]
+        if conteggi["chiave_ignota"]:
+            # Le righe del CSV senza corrispondenza nel layer: sono contate come
+            # saltate, ma qui si dice *perché* e quante (SPEC §6).
+            pezzi.append(self.t("csv_avviso_chiavi_ignote", n=conteggi["chiave_ignota"]))
+        if avvisi:
+            pezzi.append(self.t("esito_avvisi", n=len(avvisi)))
+        self.conteggi.setText("   ".join(pezzi))
         per_campo = " · ".join(f"{campo}: {n}" for campo, n in anteprima.conteggi_per_campo.items())
         self.per_campo.setText(f"{self.t('conteggi_per_campo')} {per_campo or '—'}   "
                                f"{self.t('nota_galleria')}")
@@ -726,9 +855,11 @@ class PaginaNaming(PaginaBase):
         self.w.formula = self.formula.text()
         self.w.rinomina_se_esistente = self.comportamento_rinomina()
         self.aggiorna_anteprima()
+        if self.w.modalita == naming.MODALITA_FORMULA and not self.w.formula.strip():
+            QMessageBox.warning(self, self.t("attenzione_titolo"), self.t("formula_manca"))
+            return False
         if self.w.modalita == naming.MODALITA_CSV and self.w.elenco_csv is None:
-            QMessageBox.warning(self, self.t("attenzione_titolo"), self.t("csv_blocco_illegibile",
-                                                                          errore="CSV mancante"))
+            QMessageBox.warning(self, self.t("attenzione_titolo"), self.t("csv_non_scelto"))
             return False
         return True
 
@@ -764,6 +895,11 @@ class PaginaEsegui(PaginaBase):
         self.radio_backup.toggled.connect(lambda acceso: self.cartella_backup.setEnabled(acceso))
 
         self.conferma = QCheckBox(self.t("conferma_esecuzione"))
+        # Nota sul significato di «già presenti»: rende leggibile il numero del
+        # conteggio senza dover riaprire il passo 5 (ticket 02, deduplica).
+        nota_dedup = QLabel(self.t("nota_dedup"))
+        nota_dedup.setWordWrap(True)
+        nota_dedup.setStyleSheet("color:#555")
         self.conferma.stateChanged.connect(lambda _s: self._aggiorna_bottone())
         self.bottone_esegui = QPushButton(self.t("esegui"))
         self.bottone_esegui.clicked.connect(self.esegui)
@@ -780,34 +916,45 @@ class PaginaEsegui(PaginaBase):
         self.bottone_export_tutto = QPushButton(self.t("export_tutto"))
         self.bottone_export_tutto.clicked.connect(lambda: self.esporta(solo_anomalie=False))
         self.bottone_export_tutto.setEnabled(False)
+        gruppo_report = QGroupBox(self.t("titolo_report"))
 
         disposizione = QVBoxLayout(self)
         disposizione.addWidget(self.riepilogo)
         disposizione.addWidget(self.contatori)
         disposizione.addWidget(gruppo_backup)
         disposizione.addWidget(self.conferma)
+        disposizione.addWidget(nota_dedup)
         riga = QHBoxLayout()
         riga.addWidget(self.bottone_esegui)
         riga.addWidget(self.bottone_annulla)
         riga.addWidget(self.barra, 1)
         disposizione.addLayout(riga)
         disposizione.addWidget(self.esito, 1)
+        nota_report = QLabel(self.t("report_apri_cartella"))
+        nota_report.setWordWrap(True)
+        nota_report.setStyleSheet("color:#555")
         riga_export = QHBoxLayout()
         riga_export.addWidget(self.bottone_export)
         riga_export.addWidget(self.bottone_export_tutto)
         riga_export.addStretch(1)
-        disposizione.addLayout(riga_export)
-        nota_report = QLabel(self.t("report_apri_cartella"))
-        nota_report.setWordWrap(True)
-        nota_report.setStyleSheet("color:#555")
-        disposizione.addWidget(nota_report)
+        disposizione_report = QVBoxLayout(gruppo_report)
+        disposizione_report.addWidget(nota_report)
+        disposizione_report.addLayout(riga_export)
+        disposizione.addWidget(gruppo_report)
         self._annulla_richiesto = False
+        self._in_corso = False
 
     # -------------------------------------------------- preparazione
 
     def initializePage(self):  # noqa: N802
         self.w.report = None
         self.w.eseguito = False
+        # Le chiavi si rileggono adesso: il riepilogo che l'utente legge deve
+        # descrivere la tabella com'è ora, non com'era prima dell'ultimo lotto.
+        try:
+            self.w.pagina_naming.ricalcola_collisioni()
+        except Exception:
+            pass          # senza tabella allegati si prosegue: `esegui()` dirà lui
         layer = self.w.layer_sorgente
         tabella = attach.nome_tabella_allegati(layer.name()) if layer else "—"
         da_scrivere = sum(1 for c in self.w.candidati if c.da_scrivere)
@@ -819,7 +966,8 @@ class PaginaEsegui(PaginaBase):
             self.t("atto_totale_duplicati", n=conteggi["duplicato"]),
             self.t("totale_missing", n=conteggi["missing"] + conteggi["file_ignoto"]),
             self.t("totale_collisioni", n=conteggi["collisione"]),
-            self.t("totale_saltati", n=conteggi["saltati"] + conteggi["salta"]),
+            # Stessa regola dell'anteprima: `saltati` non si risomma (vedi passo 5).
+            self.t("totale_saltati", n=conteggi["saltati"]),
         ]))
         self.contatori.setStyleSheet("color:#555")
         self.cartella_backup.setText(
@@ -844,8 +992,29 @@ class PaginaEsegui(PaginaBase):
     def _aggiorna_bottone(self):
         self.bottone_esegui.setEnabled(
             self.conferma.isChecked() and not self.w.eseguito
+            and not self._in_corso
             and any(c.da_scrivere for c in self.w.candidati)
         )
+
+    def in_corso(self) -> bool:
+        """Vero mentre il batch sta scrivendo."""
+        return self._in_corso
+
+    def _imposta_in_corso(self, attivo: bool):
+        """Blocca i comandi che non hanno senso durante il batch.
+
+        Con i pulsanti attivi l'utente può chiudere il wizard a metà scrittura e
+        leggere «annulla = nulla è stato scritto» mentre il batch committa: qui
+        restano attivi solo «Annulla la scrittura» (e la barra di avanzamento).
+        """
+        self._in_corso = bool(attivo)
+        self.w.blocca_pulsanti(attivo)
+        for comando in (self.conferma, self.radio_backup, self.radio_senza_backup,
+                        self.bottone_cartella_backup):
+            comando.setEnabled(not attivo)
+        self.cartella_backup.setEnabled(not attivo and self.radio_backup.isChecked())
+        self.bottone_annulla.setEnabled(bool(attivo))
+        self._aggiorna_bottone()
 
     # -------------------------------------------------- esecuzione
 
@@ -855,6 +1024,18 @@ class PaginaEsegui(PaginaBase):
         self.bottone_annulla.setEnabled(False)
 
     def esegui(self):
+        """Slot di «Esegui»: il batch non deve mai uscire come traceback.
+
+        Un errore imprevisto (disco pieno, tabella sparita, core che solleva) si
+        mostra tradotto e **non** porta via il report: le righe già costruite
+        restano esportabili in CSV.
+        """
+        try:
+            self._esegui_batch()
+        except Exception as errore:
+            self._errore_imprevisto(errore)
+
+    def _esegui_batch(self):
         layer = self.w.layer_sorgente
         layer_allegati = self.w.esito.layer_allegati
 
@@ -868,9 +1049,14 @@ class PaginaEsegui(PaginaBase):
                 destinazione = attach.backup_gdb(percorso_gdb, self.cartella_backup.text().strip() or None)
                 self.esito.setText(self.t("backup_fatto", percorso=destinazione))
             except OSError as errore:
-                QMessageBox.critical(self, self.t("backup_errore", errore=errore), str(errore))
+                QMessageBox.critical(self, self.t("errore_titolo"),
+                                     self.t("backup_errore", errore=errore))
                 return
 
+        # Ultimo controllo prima di scrivere: gli stati dei candidati si ricompongono
+        # con le chiavi rilette dalla tabella, così il report (costruito dagli stessi
+        # candidati) dice esattamente quello che il batch ha fatto.
+        self.w.pagina_naming.ricalcola_collisioni()
         candidati = [c for c in self.w.candidati if c.da_scrivere]
         campi = attach.risolvi_campi_allegati(layer_allegati)[0]
 
@@ -878,44 +1064,93 @@ class PaginaEsegui(PaginaBase):
         self.barra.setVisible(True)
         self.barra.setRange(0, max(1, len(candidati)))
         self.barra.setValue(0)
-        self.bottone_annulla.setEnabled(True)
-        self.bottone_esegui.setEnabled(False)
+        self.esito.setText(self.t("esecuzione_in_corso"))
+        self.esito.setStyleSheet("color:#555")
+        self._imposta_in_corso(True)
         QApplication.setOverrideCursor(Qt.WaitCursor)
         try:
+            # `chiavi_esistenti=None`: il core ricarica lui le chiavi dalla tabella
+            # (la cache del naming può essere vecchia di un'esecuzione).
             statistica = attach.scrivi_allegati(
                 layer_allegati, candidati, campi=campi,
-                chiavi_esistenti=set(self.w.chiavi_esistenti),
+                chiavi_esistenti=None,
                 callback_progresso=self._progresso,
             )
         finally:
             QApplication.restoreOverrideCursor()
-            self.bottone_annulla.setEnabled(False)
+            self._imposta_in_corso(False)
+            # Il batch ha scritto (o è stato annullato): le chiavi in cache non
+            # valgono più, il prossimo giro deve rileggere la tabella.
+            self.w.pagina_naming.invalida_cache_chiavi()
 
         self.w.statistica = statistica
         self.w.report = modulo_report.report_da_candidati(
             self.w.candidati, statistica,
             avvisi=list(self.w.elenco_csv.avvisi) if self.w.elenco_csv else [],
         )
-        self.w.eseguito = True
+        errore_commit = self._errore_commit()
+        # Con il commit fallito nel geodatabase non è finito nulla: il wizard non si
+        # dichiara «eseguito», così anche l'avviso di chiusura resta vero.
+        self.w.eseguito = not errore_commit
 
         self.barra.setVisible(False)
         if statistica.annullata:
             self.esito.setText(self.t("esecuzione_annullata"))
             self.esito.setStyleSheet("color:#a60")
         else:
-            self.esito.setText(self.t(
-                "esito_scrittura",
-                aggiunti=statistica.aggiunti,
-                duplicati=self.w.report.duplicati,
-                mancanti=self.w.report.mancanti,
-                saltati=self.w.report.saltati,
-                errori=self.w.report.errori,
-            ))
-            self.esito.setStyleSheet("color:#060")
+            if errore_commit:
+                # Il commit è andato male: quello che si vede in tabella non c'è. Dirlo
+                # chiaramente è più importante di un «aggiunti: N» che sarebbe falso.
+                self.esito.setText(self.t("esito_commit_fallito", errore=errore_commit))
+                self.esito.setStyleSheet("color:#a00")
+            else:
+                self.esito.setText(self.t(
+                    "esito_scrittura",
+                    aggiunti=getattr(self.w.report, "aggiunti", statistica.aggiunti),
+                    duplicati=self.w.report.duplicati,
+                    mancanti=self.w.report.mancanti,
+                    saltati=self.w.report.saltati,
+                    errori=self.w.report.errori,
+                ))
+                self.esito.setStyleSheet("color:#060")
 
         vuoto = not self.w.report.righe
         self.bottone_export.setEnabled(not vuoto)
         self.bottone_export_tutto.setEnabled(not vuoto)
+        self.completeChanged.emit()
+
+    def _errore_commit(self):
+        """Dettaglio del commit fallito: dal report o dalla statistica, ``""`` se ok.
+
+        Il core può esporlo sull'una o sull'altra (`ReportFinale.errore_commit`,
+        `StatisticaScrittura.errore_commit`): qui si guarda in entrambi i posti e non
+        si dà mai per scritto quello che il commit non ha salvato.
+        """
+        return (getattr(self.w.report, "errore_commit", "")
+                or getattr(self.w.statistica, "errore_commit", "") or "")
+
+    def _errore_imprevisto(self, errore):
+        """Mostra un errore imprevisto e salva il salvabile (il report).
+
+        Il wizard resta aperto: l'utente vede il motivo tradotto e, se il lotto era
+        già stato costruito, può comunque esportare il report dei candidati invece
+        di perdere tutto insieme al traceback.
+        """
+        self._imposta_in_corso(False)
+        self.barra.setVisible(False)
+        self.esito.setText(self.t("errore_esecuzione", errore=errore))
+        self.esito.setStyleSheet("color:#a00")
+        if self.w.report is None:
+            try:
+                self.w.report = modulo_report.report_da_candidati(
+                    self.w.candidati, None,
+                    avvisi=list(self.w.elenco_csv.avvisi) if self.w.elenco_csv else [],
+                )
+                vuoto = not self.w.report.righe
+                self.bottone_export.setEnabled(not vuoto)
+                self.bottone_export_tutto.setEnabled(not vuoto)
+            except Exception:
+                pass          # nemmeno il report si può costruire: resta il messaggio
         self.completeChanged.emit()
 
     def _progresso(self, indice, totale, candidato):
@@ -935,23 +1170,46 @@ class PaginaEsegui(PaginaBase):
     # -------------------------------------------------- export
 
     def esporta(self, solo_anomalie=True):
+        """Scrive il CSV del report. Un errore di scrittura si mostra, non si perde."""
         if self.w.report is None:
+            return
+        righe = self._righe_da_esportare(solo_anomalie)
+        if not righe:
+            QMessageBox.information(self, self.t("attenzione_titolo"), self.t("report_vuoto"))
             return
         intestazioni = (self.t("col_tipo_riga"), self.t("col_feature"), self.t("col_campo_foto"),
                         self.t("col_valore"), self.t("col_percorso_file"),
                         self.t("col_nome_allegato"), self.t("col_motivo"))
         percorso, _filtro = QFileDialog.getSaveFileName(
-            self, self.t("export_missing"), "report_allegati.csv", "CSV (*.csv)"
+            self, self.t("export_missing"), "report_allegati.csv", self._filtro_csv_export()
         )
         if not percorso:
             return
-        modulo_report.scrivi_report_csv(
-            percorso, self.w.report.righe, intestazioni=intestazioni,
-            traduttore=lambda codice: strings.tr(strings.TESTI_STATO.get(codice, "stato_ok"),
-                                                  self.w.lingua),
-            solo_anomalie=solo_anomalie,
-        )
+        try:
+            modulo_report.scrivi_report_csv(
+                percorso, righe, intestazioni=intestazioni,
+                traduttore=lambda codice: strings.tr(strings.TESTI_STATO.get(codice, "stato_ok"),
+                                                      self.w.lingua),
+                solo_anomalie=False,
+            )
+        except OSError as errore:
+            # Il messaggio coi conteggi finali resta dov'è: si aggiunge l'errore.
+            QMessageBox.critical(self, self.t("errore_titolo"),
+                                 self.t("errore_export", errore=errore))
+            return
         self.esito.setText(self.t("report_salvato", percorso=percorso))
+
+    def _righe_da_esportare(self, solo_anomalie):
+        """Le righe che finiscono nel CSV (per «esporta i mancanti/errori»).
+
+        La regola è quella del core (`STATI_ANOMALI`, più gli avvisi), applicata qui
+        perché è la UI a decidere *cosa* scrivere: la scrittura vera la fa
+        `scrivi_report_csv` sulle righe che le passiamo.
+        """
+        if not solo_anomalie:
+            return list(self.w.report.righe)
+        return [riga for riga in self.w.report.righe
+                if riga.tipo in modulo_report.STATI_ANOMALI + ("avviso",)]
 
     def isComplete(self):  # noqa: N802
         return self.w.eseguito
@@ -1060,11 +1318,37 @@ class WizardAllegati(QWizard):
     def t(self, chiave, **valori):
         return strings.tr(chiave, self.lingua, **valori)
 
+    def blocca_pulsanti(self, bloccati: bool):
+        """Blocca/riabilita i pulsanti standard del wizard (durante il batch).
+
+        `Avanti`/`Indietro`/`Chiudi` sono comandi del wizard, non della pagina:
+        mentre si scrive nessuno di loro è valido (l'unico è «Annulla la
+        scrittura»), altrimenti si uscirebbe a metà transazione.
+        """
+        self._pulsanti_bloccati = bool(bloccati)
+        for identificativo in (QWizard.BackButton, QWizard.NextButton,
+                               QWizard.CancelButton, QWizard.FinishButton):
+            pulsante = self.button(identificativo)
+            if pulsante is not None:
+                pulsante.setEnabled(not bloccati)
+
+    def pulsanti_bloccati(self) -> bool:
+        """Vero mentre i pulsanti del wizard sono bloccati dal batch."""
+        return bool(getattr(self, "_pulsanti_bloccati", False))
+
     def layer_filegdb(self):
-        """Solo i layer vettoriali già in progetto che stanno su un FileGDB (ticket 03)."""
+        """Solo i layer vettoriali già in progetto che stanno su un FileGDB (ticket 03).
+
+        La tabella allegati ``<layer>__ATTACH`` **non** è un layer sorgente: se la
+        si scegliesse, il wizard cercherebbe ``<layer>__ATTACH__ATTACH`` e
+        bloccherebbe con un messaggio incomprensibile. Si esclude qui, una volta
+        sola, con lo stesso suffisso che usa il core.
+        """
         trovati = []
         for layer in self.progetto.mapLayers().values():
             if not _e_vettoriale(layer):
+                continue
+            if _e_tabella_allegati(_nome(layer)):
                 continue
             if attach.sembra_filegdb(layer.source()):
                 trovati.append(layer)
@@ -1073,7 +1357,14 @@ class WizardAllegati(QWizard):
     # -------------------------------------------------- chiusura
 
     def accept(self):
-        """Chiude il wizard applicando lo stile se richiesto (ticket 03: stile alla fine)."""
+        """Chiude il wizard applicando lo stile se richiesto (ticket 03: stile alla fine).
+
+        A metà scrittura `Fine` non è un'uscita: diventa la richiesta di annullo
+        (la transazione va in rollback) e la finestra resta aperta.
+        """
+        if self.pagina_esegui.in_corso():
+            self.pagina_esegui.annulla_esecuzione()
+            return
         if self.report is not None and self.report.annullata:
             QMessageBox.information(self, self.t("attenzione_titolo"), self.t("esecuzione_annullata"))
         if self.pagina_stile.stile_richiesto():
@@ -1084,13 +1375,40 @@ class WizardAllegati(QWizard):
         super().accept()
 
     def reject(self):
-        """Annulla = esci senza aver scritto nulla (ticket 03)."""
+        """Annulla = esci senza aver scritto nulla (ticket 03).
+
+        Se il batch sta scrivendo, chiudere il wizard (o «Indietro»/«Annulla») **non**
+        è un'uscita: diventa la richiesta di annullo — la transazione in corso viene
+        annullata — e la finestra resta aperta finché la scrittura non si ferma.
+        Il messaggio «nessuna modifica al geodatabase» si mostra solo quando è vero.
+        """
+        if self.pagina_esegui.in_corso():
+            self.pagina_esegui.annulla_esecuzione()
+            return
         if not self.eseguito and self.candidati:
             QMessageBox.information(self, self.t("attenzione_titolo"), self.t("annulla_zero_scritto"))
         super().reject()
 
 
 # ---------------------------------------------------------------- helper
+
+
+def _nome(layer) -> str:
+    """Nome del layer, senza far esplodere il wizard se il layer è strano."""
+    try:
+        return str(layer.name())
+    except Exception:
+        return ""
+
+
+def _e_tabella_allegati(nome: str) -> bool:
+    """Vero se il nome del layer è quello di una tabella allegati (``...__ATTACH``).
+
+    Il confronto è case-insensitive: il suffisso lo dichiara il core
+    (``attach.SUFFISSO_TABELLA_ALLEGATI``), la maiuscola la decide ArcGIS.
+    """
+    suffisso = str(attach.SUFFISSO_TABELLA_ALLEGATI or "").upper()
+    return bool(suffisso) and str(nome or "").upper().endswith(suffisso)
 
 
 def _e_vettoriale(layer) -> bool:
