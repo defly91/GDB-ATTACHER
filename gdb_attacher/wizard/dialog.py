@@ -201,6 +201,9 @@ class PaginaLayer(PaginaBase):
         self.w.candidati = []
         self.w.report = None
         self.w.eseguito = False
+        # Cambiare layer sorgente cambia anche la tabella allegati: le chiavi lette
+        # prima non valgono più (altrimenti si deduplica contro la tabella sbagliata).
+        self.w.pagina_naming.invalida_cache_chiavi()
         return True
 
 
@@ -233,6 +236,9 @@ class PaginaVerifica(PaginaBase):
             return
         esito = attach.verifica_completa(self.w.progetto, layer)
         self.w.esito = esito
+        # Le verifiche possono aver agganciato un'altra tabella allegati: le chiavi
+        # in cache vanno rilette (o buttate) alla prossima anteprima.
+        self.w.pagina_naming.invalida_cache_chiavi()
 
         righe = [
             (self.t("ctrl_filegdb"), self._esito(esito.layer.e_filegdb),
@@ -545,6 +551,7 @@ class PaginaNaming(PaginaBase):
 
         # --- anteprima
         self._cache_chiavi = None
+        self._cache_chiavi_layer = None
         self.bottone_anteprima = QPushButton(self.t("aggiorna_anteprima"))
         self.bottone_anteprima.clicked.connect(self.aggiorna_anteprima)
         self.etichetta_anteprima = QLabel(self.t("anteprima_5"))
@@ -687,18 +694,40 @@ class PaginaNaming(PaginaBase):
     def chiavi_tabella_esistenti(self, forza: bool = False):
         """Coppie ``(REL_GLOBALID, ATT_NAME)`` già nella tabella allegati (deduplica).
 
-        La lettura è in cache: la tabella non cambia mentre si costruisce l'anteprima,
-        e su tabelle grandi una passata sola è già abbastanza.
+        La lettura è in cache — su tabelle grandi una passata sola è già abbastanza —
+        ma la cache **non** può sopravvivere a un'esecuzione: il batch scrive nella
+        tabella, quindi il giro successivo (l'utente torna al naming e riesegue)
+        riscriverebbe le stesse righe. Si invalida quando cambia il layer allegati
+        e si rilegge con ``forza=True``.
         """
-        if self._cache_chiavi is not None and not forza:
-            return self._cache_chiavi
         layer_allegati = getattr(self.w.esito, "layer_allegati", None) if self.w.esito else None
+        if not forza and self._cache_chiavi is not None \
+                and self._cache_chiavi_layer is layer_allegati:
+            return self._cache_chiavi
         if layer_allegati is None:
-            self._cache_chiavi = set()
+            self._cache_chiavi, self._cache_chiavi_layer = set(), None
             return self._cache_chiavi
         campi = attach.risolvi_campi_allegati(layer_allegati)[0]
         self._cache_chiavi = attach.carica_chiavi_esistenti(layer_allegati, campi)
+        self._cache_chiavi_layer = layer_allegati
         return self._cache_chiavi
+
+    def invalida_cache_chiavi(self):
+        """Butta la cache delle chiavi: la prossima anteprima rilegge la tabella.
+
+        Si chiama quando cambia il layer sorgente (→ tabella allegati) o quando il
+        batch ha appena scritto: tenere la cache vecchia farebbe riscrivere righe
+        già presenti.
+        """
+        self._cache_chiavi = None
+        self._cache_chiavi_layer = None
+        self.w.chiavi_esistenti = set()
+
+    def ricarica_chiavi_esistenti(self):
+        """Rilegge la tabella allegati e riallinea ``w.chiavi_esistenti``."""
+        esistenti = self.chiavi_tabella_esistenti(forza=True)
+        self.w.chiavi_esistenti = set(esistenti)
+        return esistenti
 
     def costruisci_candidati(self, salva=True):
         """Costruisce i candidati secondo modalità, campi, cartella base e CSV."""
@@ -729,6 +758,20 @@ class PaginaNaming(PaginaBase):
             w.candidati = candidati
             w.chiavi_esistenti = set(esistenti)
         return candidati
+
+    def ricalcola_collisioni(self):
+        """Ricompone gli stati dei candidati con le chiavi rilette dalla tabella.
+
+        Quello che si scrive e quello che dice il report devono venire dagli stessi
+        numeri: se la tabella è cambiata dopo l'anteprima (un giro precedente, un
+        allegato aggiunto da ArcGIS), i candidati già presenti diventano
+        ``duplicato`` *prima* della scrittura, non dopo.
+        """
+        esistenti = self.ricarica_chiavi_esistenti()
+        self.w.candidati = naming.risolvi_collisioni(
+            self.w.candidati, esistenti, self.comportamento_rinomina()
+        )
+        return self.w.candidati
 
     def aggiorna_anteprima(self):
         try:
@@ -860,6 +903,12 @@ class PaginaEsegui(PaginaBase):
     def initializePage(self):  # noqa: N802
         self.w.report = None
         self.w.eseguito = False
+        # Le chiavi si rileggono adesso: il riepilogo che l'utente legge deve
+        # descrivere la tabella com'è ora, non com'era prima dell'ultimo lotto.
+        try:
+            self.w.pagina_naming.ricalcola_collisioni()
+        except Exception:
+            pass          # senza tabella allegati si prosegue: `esegui()` dirà lui
         layer = self.w.layer_sorgente
         tabella = attach.nome_tabella_allegati(layer.name()) if layer else "—"
         da_scrivere = sum(1 for c in self.w.candidati if c.da_scrivere)
@@ -924,6 +973,10 @@ class PaginaEsegui(PaginaBase):
                 QMessageBox.critical(self, self.t("backup_errore", errore=errore), str(errore))
                 return
 
+        # Ultimo controllo prima di scrivere: gli stati dei candidati si ricompongono
+        # con le chiavi rilette dalla tabella, così il report (costruito dagli stessi
+        # candidati) dice esattamente quello che il batch ha fatto.
+        self.w.pagina_naming.ricalcola_collisioni()
         candidati = [c for c in self.w.candidati if c.da_scrivere]
         campi = attach.risolvi_campi_allegati(layer_allegati)[0]
 
@@ -935,14 +988,19 @@ class PaginaEsegui(PaginaBase):
         self.bottone_esegui.setEnabled(False)
         QApplication.setOverrideCursor(Qt.WaitCursor)
         try:
+            # `chiavi_esistenti=None`: il core ricarica lui le chiavi dalla tabella
+            # (la cache del naming può essere vecchia di un'esecuzione).
             statistica = attach.scrivi_allegati(
                 layer_allegati, candidati, campi=campi,
-                chiavi_esistenti=set(self.w.chiavi_esistenti),
+                chiavi_esistenti=None,
                 callback_progresso=self._progresso,
             )
         finally:
             QApplication.restoreOverrideCursor()
             self.bottone_annulla.setEnabled(False)
+            # Il batch ha scritto (o è stato annullato): le chiavi in cache non
+            # valgono più, il prossimo giro deve rileggere la tabella.
+            self.w.pagina_naming.invalida_cache_chiavi()
 
         self.w.statistica = statistica
         self.w.report = modulo_report.report_da_candidati(
