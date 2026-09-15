@@ -99,15 +99,19 @@ def _5():
 @controllo("wizard istanziato con QgsApplication offscreen")
 def _6():
     from PyQt5.QtWidgets import QApplication
-    from gdb_attacher.wizard.dialog import WizardDialog
+    from gdb_attacher.wizard.dialog import WizardAllegati
     app = QApplication.instance() or QApplication(sys.argv)
     iface = MagicMock()
-    dlg = WizardDialog(iface, None)
+    dlg = WizardAllegati(iface, None)
     passi = getattr(dlg, "passi", None) or getattr(dlg, "_passi", None)
-    n = len(passi) if passi is not None else "n/d"
+    if passi is None:
+        # Il wizard costruisce le pagine dentro di sé: contarle dalle Qt è la prova
+        # che l'interfaccia è stata montata per davvero.
+        passi = [dlg.page(i) for i in range(dlg.pageIds().__len__())] \
+            if hasattr(dlg, "pageIds") else []
     titolo = dlg.windowTitle() if hasattr(dlg, "windowTitle") else ""
     dlg.close()
-    return f"finestra creata, titolo='{titolo}', passi={n}"
+    return f"finestra creata, titolo='{titolo}', pagine={len(passi)}"
 
 
 print("=" * 68)

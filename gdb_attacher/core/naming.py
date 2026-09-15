@@ -46,7 +46,7 @@ import io
 import os
 from dataclasses import dataclass, field, replace
 
-from .attach import SENTINELLE_NULL, normalizza_guid
+from .attach import SENTINELLE_NULL, STATI_SCRIVIBILI, normalizza_guid
 from .discovery import SEPARATORI_RE
 
 # ---------------------------------------------------------------- costanti
@@ -123,7 +123,7 @@ class CandidatoAllegato:
         qui lo faceva sparire in silenzio: il report lo contava come aggiunto e la foto
         non finiva mai nel GDB.
         """
-        return self.stato in ("ok", "collisione")
+        return self.stato in STATI_SCRIVIBILI
 
     @property
     def rinominato(self) -> bool:

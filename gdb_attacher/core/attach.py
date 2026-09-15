@@ -47,6 +47,10 @@ NOMI_GLOBALID_SORGENTE = ("GlobalID", "GLOBALID", "globalid")
 #: ``None``. Qualunque valore che, ripulito e in maiuscolo, sta qui va trattato come vuoto.
 SENTINELLE_NULL = frozenset({"", "NULL", "NONE", "<NULL>", "N/A"})
 
+#: Stati di un candidato che vanno **scritti** nel GDB: "ok" e "collisione" (un allegato
+#: rinominato per collisione di nome è comunque un allegato da scrivere).
+STATI_SCRIVIBILI = ("ok", "collisione")
+
 #: Mime per estensione. Volutamente più larga dello script click (che copre 4
 #: formati e ricade su octet-stream): qui il mime serve anche all'anteprima HTML.
 MIME_PER_ESTENSIONE = {
@@ -494,6 +498,11 @@ def scrivi_allegati(layer_allegati, candidati, campi=None, chiavi_esistenti=None
 
                 nome_allegato = getattr(candidato, "nome_allegato", "") or ""
                 percorso = getattr(candidato, "percorso_file", "") or ""
+                # Difesa in profondità: il chiamante decide cosa passare, ma uno stato non
+                # scrivibile (duplicato, mancante, errore, salta) qui non entra mai.
+                if getattr(candidato, "stato", "ok") not in STATI_SCRIVIBILI:
+                    statistica.saltati += 1
+                    continue
                 # Il candidato porta il GLOBALID grezzo della feature in ``id_parent``
                 # (``rel_globalid`` esiste per compatibilità con chiamanti esterni).
                 guid_parent = (getattr(candidato, "rel_globalid", "")

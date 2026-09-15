@@ -23,7 +23,7 @@ classifiers = [
     "Topic :: Scientific/Engineering :: GIS",
 ]
 # GPLv2+ (vedi licenza del plugin), coerente con la decisione del ticket 01.
-license = { text = "GPL-2.0-or-later" }
+license = "GPL-2.0-or-later"
 
 [tool.setuptools]
 # Il pacchetto del plugin non e' un pacchetto Python installabile: niente moduli.

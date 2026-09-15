@@ -42,11 +42,11 @@ gdb_attacher/
 │   ├── styles.py           # applicazione QML variante A
 │   └── report.py           # conteggi, motivi di scarto, export CSV
 ├── wizard/
-│   ├── strings.py          # stringhe IT/EN centralizzate
-│   └── dialogs           # step della procedura guidata
+│   ├── strings.py          # stringhe IT/EN centralizzate (chiavi allineate fra le lingue)
+│   └── dialog.py           # le 7 pagine + finestra WizardAllegati
 └── resources/
-    ├── qml/variante_A_anteprima.qml
-    └── icons/
+    ├── stile_attach_variante_A.qml   # QML della tabella allegati (applicato in automatico)
+    └── icone/              # icona_plugin.png (PNG, richiesta da plugins.qgis.org) + SVG
 ```
 
 Regole di dipendenza: `core/naming.py`, `core/discovery.py` e `core/report.py` devono restare

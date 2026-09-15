@@ -1,12 +1,14 @@
-# test_contratto_v1.py — contratto v1 di naming e deduplica, eseguito sui fake.
+# test_contratto_v1.py — contratto v1 di naming e deduplica, eseguito sull'ORACOLO.
 #
-# ATTENZIONE al perimetro: questi test NON esercitano l'implementazione del plugin
-# (gdb_attacher/ e' scritto in un altro ramo di lavoro e qui non esiste). Fissano
-# il contratto deciso nella mappa — `tests/oracolo_v1.py` ne e' la versione
-# eseguibile — e usano il finto QGIS per la parte "tabella allegati" (feature,
-# edit(), blob, DATA_SIZE), cioe' la stessa meccanica che useranno gli script del
-# plugin. Quando il pacchetto arrivera', i CASI_NAMING qui sotto sono la specifica
-# da far combaciare.
+# ATTENZIONE al perimetro: questi test NON esercitano l'implementazione del plugin, ma
+# l'oracolo eseguibile del contratto (`tests/oracolo_v1.py`). Servono a fissare *cosa* deve
+# fare il plugin — il contratto deciso nella mappa — non a verificarlo: sono scritti per
+# restare leggibili come specifica.
+#
+# La verifica del plugin vero è in `tests/test_contratto_plugin.py`: stessi casi, ma
+# attraversano le funzioni reali di `gdb_attacher/core/naming.py`. Se i due file
+# divergono, ha ragione quello sul plugin (l'oracolo è una descrizione, il codice è il
+# fatto): vedi lo scostamento documentato su "formula vuota" in coda a quel file.
 #
 # Copertura: naming in tutte e tre le modalita' (originale / formula / csv),
 # multi-valore, nome con apice, collisione, nome vuoto, deduplica al rilancio.

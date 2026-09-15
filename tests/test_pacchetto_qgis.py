@@ -79,10 +79,14 @@ def test_l_icona_e_versionata_e_il_gitignore_non_la_esclude():
 
 
 def test_in_modalita_formula_il_wizard_richiede_la_formula():
-    """La formula vuota non è raggiungibile: il passo blocca l'avanzamento.
+    """Guardia statica (non comportamentale) sul passo di naming.
 
-    È il motivo per cui il plugin non ha (e non deve avere) un ripiego
-    "formula vuota → nome originale": vedi tests/test_contratto_plugin.py.
+    Il controllo vero — il wizard che blocca l'avanzamento con formula vuota — sta nei test
+    del wizard, che istanziano la pagina. Qui resta una guardia sul sorgente: costa nulla e
+    segnala subito se qualcuno riscrive `isComplete` perdendo la condizione.
+
+    È il motivo per cui il plugin non ha (e non deve avere) un ripiego "formula vuota →
+    nome originale": vedi tests/test_contratto_plugin.py.
     """
     sorgente = open(os.path.join(PLUGIN, "wizard", "dialog.py"), encoding="utf-8").read()
     assert "def isComplete" in sorgente
@@ -112,6 +116,8 @@ def test_lo_zip_contiene_i_file_obbligatori_per_qgis(zip_costruito):
 def test_lo_zip_non_porta_dietro_test_documentazione_e_cache(zip_costruito):
     with zipfile.ZipFile(zip_costruito) as z:
         nomi = z.namelist()
+    # `in` e non `startswith`: i nomi nello zip iniziano con "gdb_attacher/", quindi un
+    # startswith("tests/") non matcherebbe mai e il test sarebbe vacuo.
     for vietato in ("tests/", "docs/", ".github/", "__pycache__", ".pyc"):
         assert not any(vietato in n for n in nomi), f"lo zip contiene {vietato}"
 
@@ -173,6 +179,12 @@ def test_lo_script_zip_e_eseguibile():
 
 
 def test_il_pacchetto_non_dipende_da_qgis_per_essere_costruito():
-    """Il build gira anche dove QGIS non è installato (MiniPC, CI)."""
+    """Il build gira anche dove QGIS non è installato (MiniPC, CI).
+
+    Su una macchina con QGIS installato il caso non è rappresentabile: si salta invece di
+    far fallire la suite per una condizione dell'ambiente.
+    """
     esito = subprocess.run([sys.executable, "-c", "import qgis"], capture_output=True, text=True)
-    assert esito.returncode != 0, "QGIS risulta installato: la guardia non testa il caso reale"
+    if esito.returncode == 0:
+        pytest.skip("QGIS presente su questa macchina: la guardia 'senza QGIS' non è rappresentabile")
+    assert esito.returncode != 0

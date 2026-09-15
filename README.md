@@ -12,7 +12,7 @@ Serve a chi raccoglie foto sul campo e deve consegnare un `.gdb` con gli allegat
 
 ## Prerequisiti
 
-- **QGIS 3.x** (il prototipo è stato provato su 3.44; la versione minima esatta va fissata in `metadata.txt`).
+- **QGIS 3.x** (provato su 3.34 e 3.44; `qgisMinimumVersion=3.36`, `qgisMaximumVersion=3.99` in `metadata.txt`).
 - Un **FileGDB con gli allegati già abilitati da ArcGIS Pro** (`EnableAttachments` sul layer sorgente): il plugin non crea né modifica lo schema della tabella allegati.
 - Le **foto/file su disco**, in una cartella base (anche con sottocartelle).
 - Su Windows/nell'ambiente di consegna tipico: nessuna installazione di ArcGIS richiesta per usare il plugin, ma il GDB deve essere stato preparato una volta con Pro.

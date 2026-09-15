@@ -240,7 +240,7 @@ def test_zip_del_plugin_vero_si_costruisce(tmp_path):
     with zipfile.ZipFile(zip_path) as z:
         nomi = z.namelist()
     assert "gdb_attacher/metadata.txt" in nomi
-    assert not any(n.startswith(("tests/", "docs/", ".github/")) for n in nomi)
+    assert not any(vietato in n for n in nomi for vietato in ("tests/", "docs/", ".github/"))
 
 
 if __name__ == "__main__":       # pragma: no cover

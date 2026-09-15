@@ -180,9 +180,10 @@ class IndiceFile:
         self.estensioni = tuple(estensioni or ESTENSIONI)
         self.percorsi = {}   # path relativo minuscolo (sep '/') -> percorso assoluto
         self.nomi = {}       # basename minuscolo -> primo percorso assoluto
-        for radice_abs, _dirs, files in os.walk(self.cartella_base):
+        for radice_abs, dirs, files in os.walk(self.cartella_base):
             rel_radice = os.path.relpath(radice_abs, self.cartella_base).replace("\\", "/")
             if rel_radice.count("/") > 1:      # profondità massima 2
+                dirs[:] = []                   # pota: non scendere oltre
                 continue
             for nome_file in files:
                 rel = nome_file if rel_radice == "." else f"{rel_radice}/{nome_file}"
@@ -366,7 +367,7 @@ def punteggio_campo(nome, tipo, valori, cartella_base=None, estensioni=None,
         livello, motivo = "D", "nessun segnale di nome o di valore"
 
     multi_rate = rate(multi)
-    if multi and livello in "ABC":
+    if multi and livello in ("A", "B", "C"):
         motivo += f"; {multi_rate:.0%} valori multipli"
 
     return PunteggioCampo(
