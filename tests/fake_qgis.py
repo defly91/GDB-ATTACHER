@@ -9,6 +9,10 @@
 #
 # PROGETTO: e' volutamente GENERICO, non conosce i nomi interni del plugin.
 #   - le classi note (QgsVectorLayer, QgsFeature, QMessageBox...) sono esplicite;
+#   - i widget Qt usati dalle finestre (QWizard, QWizardPage, QTableWidget,
+#     QComboBox, QProgressBar, QLabel, QLineEdit, QPushButton...) hanno stato
+#     vero e segnali veri (`connect`/`emit`), cosi' un wizard si puo' montare e
+#     pilotare in un test;
 #   - qualunque nome sconosciuto di qgis.* diventa uno stub class-level creato
 #     al volo, quindi un import non previsto non rompe la raccolta.
 #
@@ -41,6 +45,11 @@ __all__ = [
     "crea_feature", "crea_layer_sorgente", "crea_layer_attach",
     "registra_sorgente", "carica", "SCHEMA_SORGENTE", "SCHEMA_ATTACH",
     "risposte", "REGISTRO_DIALOGHI",
+    # widget Qt finti (segnali veri): vedi la sezione «Widget Qt finti»
+    "QWidget", "QLabel", "QLineEdit", "QPushButton", "QCheckBox", "QRadioButton",
+    "QGroupBox", "QComboBox", "QProgressBar", "QTableWidget", "QTableWidgetItem",
+    "QVBoxLayout", "QHBoxLayout", "QGridLayout", "QApplication",
+    "QWizard", "QWizardPage",
 ]
 
 # ---------------------------------------------------------------------------
@@ -797,7 +806,7 @@ class FakeLayerTree(_Qualsiasi):
         self._progetto = progetto
 
     def findLayer(self, layer_id):
-        return None
+        return self._progetto.mapLayer(layer_id)
 
 
 class FakeProject:
@@ -831,6 +840,18 @@ class FakeProject:
 
     def mapLayers(self):
         return dict(self._layer)
+
+    def mapLayer(self, layer_id):
+        """`QgsProject.mapLayer(id)`: il layer con quell'id, o None."""
+        if hasattr(layer_id, "id"):
+            layer_id = layer_id.id()
+        return self._layer.get(layer_id)
+
+    def mapLayerById(self, layer_id):
+        return self.mapLayer(layer_id)
+
+    def layerTreeLayer(self, layer_id):
+        return self.mapLayer(layer_id)
 
     def mapLayersByName(self, nome):
         return [lyr for lyr in self._layer.values() if lyr.name() == nome]
@@ -1135,6 +1156,954 @@ class QFileDialog(_Qualsiasi):
 
 
 # ---------------------------------------------------------------------------
+# Widget Qt finti con segnali veri
+#
+# PERCHE': gli stub generici (una funzione per ogni attributo) non bastano per
+# istanziare una finestra: `widget.sig.connect(...)` su uno stub fa esplodere
+# `AttributeError: 'function' object has no attribute 'connect'`. Qui i widget
+# hanno **stato vero** (testo, visibilita', abilitazione, voci, celle) e
+# **segnali veri** (`_Segnale`, con `connect`/`emit`), quindi i percorsi del
+# wizard si possono montare e pilotare nei test.
+#
+# Ogni classe eredita da `_Qualsiasi`: un metodo Qt non implementato resta un
+# no-op, cosi' un widget usato in un modo non previsto non rompe il test.
+
+
+class _SegnaleWidget(_Segnale):
+    """Segnale di un widget: non emette se il widget ha i segnali bloccati."""
+
+    def __init__(self, widget=None):
+        super().__init__()
+        self._widget = widget
+
+    def emit(self, *args, **kwargs):
+        bloccati = getattr(self._widget, "_segnali_bloccati", False)
+        if self._widget is not None and bloccati:
+            return
+        super().emit(*args, **kwargs)
+
+
+class _FakeSezioneHeader(_Qualsiasi):
+    """Header di tabella finto (verticale/orizzontale)."""
+
+    def __init__(self):
+        self.visibile = True
+        self.altezza_predefinita = 20
+
+    def setVisible(self, visibile):
+        self.visibile = bool(visibile)
+
+    def isVisible(self):
+        return self.visibile
+
+    def setDefaultSectionSize(self, altezza):
+        self.altezza_predefinita = altezza
+
+    def setSectionResizeMode(self, *args, **kwargs):
+        pass
+
+    def setStretchLastSection(self, *args, **kwargs):
+        pass
+
+
+class QWidget(_Qualsiasi):
+    """Widget finto: testo/stile/visibilita'/abilitazione e figli registrati."""
+
+    def __init__(self, parent=None, *args, **kwargs):
+        self._parent = parent
+        self._visibile = True
+        self._abilitato = True
+        self._stile = ""
+        self._nome_oggetto = ""
+        self._tooltip = ""
+        self._titolo_finestra = ""
+        self._layout = None
+        self._segnali_bloccati = False
+        self._dimensioni = None
+        self.figli = []
+
+    # -- albero -------------------------------------------------------------
+    def parent(self):
+        return self._parent
+
+    def setParent(self, parent):
+        self._parent = parent
+
+    def addChild(self, figlio):
+        self.figli.append(figlio)
+
+    def findChildren(self, tipo=None):
+        return [f for f in self.figli if tipo is None or isinstance(f, tipo)]
+
+    def layout(self):
+        return self._layout
+
+    def setLayout(self, layout):
+        self._layout = layout
+        if hasattr(layout, "setParent"):
+            layout.setParent(self)
+
+    # -- stato --------------------------------------------------------------
+    def setVisible(self, visibile):
+        self._visibile = bool(visibile)
+
+    def isVisible(self):
+        return self._visibile
+
+    def show(self):
+        self._visibile = True
+
+    def hide(self):
+        self._visibile = False
+
+    def setEnabled(self, abilitato):
+        self._abilitato = bool(abilitato)
+
+    def isEnabled(self):
+        return self._abilitato
+
+    def setDisabled(self, disabilitato):
+        self._abilitato = not bool(disabilitato)
+
+    def isEnabledTo(self, *args, **kwargs):
+        return self._abilitato
+
+    def setStyleSheet(self, stile):
+        self._stile = str(stile or "")
+
+    def styleSheet(self):
+        return self._stile
+
+    def setObjectName(self, nome):
+        self._nome_oggetto = str(nome)
+
+    def objectName(self):
+        return self._nome_oggetto
+
+    def setToolTip(self, testo):
+        self._tooltip = str(testo or "")
+
+    def toolTip(self):
+        return self._tooltip
+
+    def setStatusTip(self, testo):
+        pass
+
+    def setWhatsThis(self, testo):
+        pass
+
+    def setWindowTitle(self, titolo):
+        self._titolo_finestra = str(titolo or "")
+
+    def windowTitle(self):
+        return self._titolo_finestra
+
+    def resize(self, *dimensioni):
+        self._dimensioni = dimensioni
+
+    def size(self):
+        return self._dimensioni
+
+    def update(self):
+        pass
+
+    def repaint(self):
+        pass
+
+    def deleteLater(self):
+        pass
+
+    def close(self):
+        pass
+
+    def setFocus(self):
+        pass
+
+    def blockSignals(self, blocco):
+        self._segnali_bloccati = bool(blocco)
+        return self._segnali_bloccati
+
+    def signalsBlocked(self):
+        return self._segnali_bloccati
+
+    def __repr__(self):
+        return "%s(%r)" % (type(self).__name__, self._nome_oggetto or self._testo_se_repr())
+
+    def _testo_se_repr(self):
+        return getattr(self, "_testo", "")
+
+
+class QLabel(QWidget):
+    def __init__(self, testo="", parent=None):
+        if isinstance(testo, QWidget) and parent is None:
+            testo, parent = "", testo
+        super().__init__(parent)
+        self._testo = "" if testo is None else str(testo)
+        self._word_wrap = False
+        self._open_external = True
+        self._flags_interazione = 0
+        self._pixmap = None
+
+    def setText(self, testo):
+        self._testo = "" if testo is None else str(testo)
+
+    def text(self):
+        return self._testo
+
+    def setWordWrap(self, attivo):
+        self._word_wrap = bool(attivo)
+
+    def wordWrap(self):
+        return self._word_wrap
+
+    def setOpenExternalLinks(self, attivo):
+        self._open_external = bool(attivo)
+
+    def openExternalLinks(self):
+        return self._open_external
+
+    def setTextInteractionFlags(self, flag):
+        self._flags_interazione = flag
+
+    def textInteractionFlags(self):
+        return self._flags_interazione
+
+    def setPixmap(self, pixmap):
+        self._pixmap = pixmap
+
+    def pixmap(self):
+        return self._pixmap
+
+    def setAlignment(self, allineamento):
+        self._allineamento = allineamento
+
+
+class QLineEdit(QWidget):
+    def __init__(self, testo="", parent=None):
+        if isinstance(testo, QWidget) and parent is None:
+            testo, parent = "", testo
+        super().__init__(parent)
+        self._testo = "" if testo is None else str(testo)
+        self._placeholder = ""
+        self._sola_lettura = False
+        self.textChanged = _SegnaleWidget(self)
+        self.textEdited = _SegnaleWidget(self)
+        self.editingFinished = _SegnaleWidget(self)
+        self.returnPressed = _SegnaleWidget(self)
+
+    def setText(self, testo):
+        nuovo = "" if testo is None else str(testo)
+        cambiato = nuovo != self._testo
+        self._testo = nuovo
+        if cambiato:
+            self.textChanged.emit(nuovo)
+
+    def text(self):
+        return self._testo
+
+    def clear(self):
+        self.setText("")
+
+    def setPlaceholderText(self, testo):
+        self._placeholder = "" if testo is None else str(testo)
+
+    def placeholderText(self):
+        return self._placeholder
+
+    def setReadOnly(self, attivo):
+        self._sola_lettura = bool(attivo)
+
+    def isReadOnly(self):
+        return self._sola_lettura
+
+    def setEchoMode(self, modo):
+        self._modo_echo = modo
+
+
+class QAbstractButton(QWidget):
+    """Base dei pulsanti: `clicked`/`toggled` veri, spuntatura vera."""
+
+    def __init__(self, testo="", parent=None):
+        if isinstance(testo, QWidget) and parent is None:
+            testo, parent = "", testo
+        super().__init__(parent)
+        self._testo = "" if testo is None else str(testo)
+        self._checked = False
+        self._checkable = True
+        self.clicked = _SegnaleWidget(self)
+        self.toggled = _SegnaleWidget(self)
+        self.pressed = _SegnaleWidget(self)
+        self.released = _SegnaleWidget(self)
+
+    def setText(self, testo):
+        self._testo = "" if testo is None else str(testo)
+
+    def text(self):
+        return self._testo
+
+    def setCheckable(self, checkable):
+        self._checkable = bool(checkable)
+
+    def isCheckable(self):
+        return self._checkable
+
+    def setChecked(self, spuntato):
+        spuntato = bool(spuntato)
+        if spuntato == self._checked:
+            return
+        self._checked = spuntato
+        if spuntato:
+            self._sgancia_i_fratelli()
+        self.toggled.emit(spuntato)
+        self._segnala_stato(spuntato)
+
+    def isChecked(self):
+        return self._checked
+
+    def toggle(self):
+        self.setChecked(not self._checked)
+
+    def click(self):
+        """Come QPushButton.click(): non fa nulla se il pulsante è disabilitato."""
+        if not self.isEnabled():
+            return
+        self.pressed.emit()
+        if self._checkable:
+            self.toggle()
+        self.clicked.emit(self._checked if self._checkable else False)
+        self.released.emit()
+
+    # -- interni ------------------------------------------------------------
+    def _segnala_stato(self, spuntato):
+        pass
+
+    def _sgancia_i_fratelli(self):
+        """Radio finti: spuntarne uno smonta i fratelli con lo stesso genitore."""
+        for fratello in (self._parent.figli if isinstance(self._parent, QWidget) else []):
+            if fratello is not self and isinstance(fratello, QRadioButton) and fratello.isChecked():
+                fratello._checked = False
+                fratello.toggled.emit(False)
+
+
+class QPushButton(QAbstractButton):
+    def __init__(self, testo="", parent=None):
+        super().__init__(testo, parent)
+        self._checkable = False
+
+
+class QCheckBox(QAbstractButton):
+    def __init__(self, testo="", parent=None):
+        super().__init__(testo, parent)
+        self.stateChanged = _SegnaleWidget(self)
+        self._checkable = True
+
+    def checkState(self):
+        return Qt.Checked if self._checked else Qt.Unchecked
+
+    def setCheckState(self, stato):
+        self.setChecked(stato == Qt.Checked)
+
+    def _segnala_stato(self, spuntato):
+        self.stateChanged.emit(Qt.Checked if spuntato else Qt.Unchecked)
+
+    def _sgancia_i_fratelli(self):
+        return          # le caselle non sono mutuamente esclusive
+
+
+class QRadioButton(QAbstractButton):
+    def __init__(self, testo="", parent=None):
+        super().__init__(testo, parent)
+        self._checkable = True
+
+
+class QGroupBox(QWidget):
+    def __init__(self, titolo="", parent=None):
+        if isinstance(titolo, QWidget) and parent is None:
+            titolo, parent = "", titolo
+        super().__init__(parent)
+        self._titolo = "" if titolo is None else str(titolo)
+
+    def setTitle(self, titolo):
+        self._titolo = "" if titolo is None else str(titolo)
+
+    def title(self):
+        return self._titolo
+
+
+class QProgressBar(QWidget):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self._minimo = 0
+        self._massimo = 100
+        self._valore = -1
+        self._formato = "%p%"
+
+    def setRange(self, minimo, massimo):
+        self._minimo, self._massimo = minimo, massimo
+
+    def setMinimum(self, minimo):
+        self._minimo = minimo
+
+    def setMaximum(self, massimo):
+        self._massimo = massimo
+
+    def minimum(self):
+        return self._minimo
+
+    def maximum(self):
+        return self._massimo
+
+    def setValue(self, valore):
+        self._valore = valore
+
+    def value(self):
+        return self._valore
+
+    def setFormat(self, formato):
+        self._formato = str(formato)
+
+    def format(self):
+        return self._formato
+
+    def reset(self):
+        self._valore = -1
+
+
+class QTableWidgetItem(_Qualsiasi):
+    """Cella di tabella: testo, colore del testo, spunta e flag."""
+
+    def __init__(self, testo=""):
+        if isinstance(testo, QTableWidgetItem):
+            testo = testo.text()
+        self._testo = "" if testo is None else str(testo)
+        self._foreground = None
+        self._background = None
+        self._flags = Qt.ItemIsEnabled
+        self._check = Qt.Unchecked
+        self._dati = {}
+
+    def text(self):
+        return self._testo
+
+    def setText(self, testo):
+        self._testo = "" if testo is None else str(testo)
+
+    def setForeground(self, colore):
+        self._foreground = colore
+
+    def foreground(self):
+        return self._foreground
+
+    def setBackground(self, colore):
+        self._background = colore
+
+    def background(self):
+        return self._background
+
+    def setFlags(self, flag):
+        self._flags = flag
+
+    def flags(self):
+        return self._flags
+
+    def setCheckState(self, stato):
+        self._check = stato
+
+    def checkState(self):
+        return self._check
+
+    def setData(self, ruolo, valore):
+        self._dati[ruolo] = valore
+
+    def data(self, ruolo):
+        return self._dati.get(ruolo)
+
+    def __repr__(self):
+        return "QTableWidgetItem(%r)" % (self._testo,)
+
+
+class QComboBox(QWidget):
+    """Combo finta: voci con dato associato, indice corrente e segnali veri."""
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self._voci = []              # (testo, dato)
+        self._indice = -1
+        self.currentIndexChanged = _SegnaleWidget(self)
+        self.currentTextChanged = _SegnaleWidget(self)
+        self.activated = _SegnaleWidget(self)
+
+    def count(self):
+        return len(self._voci)
+
+    def addItem(self, testo, dato=None):
+        self._voci.append((str(testo), dato))
+        if self._indice < 0:
+            self._indice = 0
+            self.currentIndexChanged.emit(0)
+
+    def addItems(self, voci):
+        for voce in voci:
+            self.addItem(voce)
+
+    def insertItem(self, indice, testo, dato=None):
+        self._voci.insert(indice, (str(testo), dato))
+        if self._indice < 0:
+            self._indice = 0
+
+    def clear(self):
+        self._voci = []
+        self._indice = -1
+        self.currentIndexChanged.emit(-1)
+
+    def currentIndex(self):
+        return self._indice
+
+    def setCurrentIndex(self, indice):
+        if indice == self._indice:
+            return
+        if indice < -1 or indice >= len(self._voci):
+            indice = -1
+        self._indice = indice
+        self.currentIndexChanged.emit(indice)
+        self.currentTextChanged.emit(self.currentText())
+
+    def currentText(self):
+        if 0 <= self._indice < len(self._voci):
+            return self._voci[self._indice][0]
+        return ""
+
+    def currentData(self):
+        if 0 <= self._indice < len(self._voci):
+            return self._voci[self._indice][1]
+        return None
+
+    def itemText(self, indice):
+        return self._voci[indice][0]
+
+    def setItemText(self, indice, testo):
+        self._voci[indice] = (str(testo), self._voci[indice][1])
+
+    def itemData(self, indice):
+        return self._voci[indice][1]
+
+    def findText(self, testo, *args, **kwargs):
+        for indice, (voce, _dato) in enumerate(self._voci):
+            if voce == str(testo):
+                return indice
+        return -1
+
+    def findData(self, dato, *args, **kwargs):
+        for indice, (_voce, associato) in enumerate(self._voci):
+            if associato == dato:
+                return indice
+        return -1
+
+    def setEditable(self, attivo):
+        self._modificabile = bool(attivo)
+
+
+class _FakeLayout(_Qualsiasi):
+    """Layout finto: registra i figli (e li reparenta, come fa Qt)."""
+
+    def __init__(self, parent=None):
+        self._parent = parent if isinstance(parent, QWidget) else None
+        self.figli = []
+
+    def parentWidget(self):
+        return self._parent
+
+    def setParent(self, parent):
+        self._parent = parent if isinstance(parent, QWidget) else self._parent
+
+    def addWidget(self, widget, *args, **kwargs):
+        self.figli.append(widget)
+        if isinstance(widget, QWidget) and self._parent is not None:
+            widget.setParent(self._parent)
+            self._parent.addChild(widget)
+
+    def addLayout(self, layout, *args, **kwargs):
+        self.figli.append(layout)
+
+    def addStretch(self, *args, **kwargs):
+        pass
+
+    def addSpacing(self, *args, **kwargs):
+        pass
+
+    def count(self):
+        return len(self.figli)
+
+    def setSpacing(self, valore):
+        self._spaziatura = valore
+
+    def setContentsMargins(self, *args, **kwargs):
+        pass
+
+
+class QVBoxLayout(_FakeLayout):
+    pass
+
+
+class QHBoxLayout(_FakeLayout):
+    pass
+
+
+class QGridLayout(_FakeLayout):
+    def addWidget(self, widget, riga=0, colonna=0, *args, **kwargs):
+        super().addWidget(widget)
+
+    def addLayout(self, layout, riga=0, colonna=0, *args, **kwargs):
+        super().addLayout(layout)
+
+
+class QTableWidget(QWidget):
+    """Tabella finta: righe, colonne, celle indicizzabili e `itemChanged` vero."""
+
+    NoEditTriggers = 0
+    SelectedClicked = 1
+    AnyKeyPressed = 2
+    NoSelection = 0
+    SingleSelection = 1
+    ExtendedSelection = 3
+
+    def __init__(self, righe=0, colonne=0, parent=None):
+        if isinstance(righe, QWidget) and parent is None:
+            righe, colonne, parent = 0, 0, righe
+        super().__init__(parent)
+        self._righe = int(righe or 0)
+        self._colonne = int(colonne or 0)
+        self._celle = {}
+        self._intestazioni = []
+        self._verticale = _FakeSezioneHeader()
+        self._orizzontale = _FakeSezioneHeader()
+        self.itemChanged = _SegnaleWidget(self)
+        self.cellChanged = _SegnaleWidget(self)
+
+    # -- dimensioni ---------------------------------------------------------
+    def setRowCount(self, righe):
+        self._righe = int(righe)
+        self._celle = {k: v for k, v in self._celle.items() if k[0] < self._righe}
+
+    def rowCount(self):
+        return self._righe
+
+    def setColumnCount(self, colonne):
+        self._colonne = int(colonne)
+
+    def columnCount(self):
+        return self._colonne
+
+    def insertRow(self, indice):
+        self._righe += 1
+
+    def insertColumn(self, indice):
+        self._colonne += 1
+
+    def removeRow(self, indice):
+        self._righe = max(0, self._righe - 1)
+
+    def clearContents(self):
+        self._celle = {}
+
+    # -- celle --------------------------------------------------------------
+    def setItem(self, riga, colonna, elemento):
+        self._celle[(riga, colonna)] = elemento
+        self.itemChanged.emit(elemento)
+
+    def item(self, riga, colonna):
+        return self._celle.get((riga, colonna))
+
+    def setHorizontalHeaderLabels(self, etichette):
+        self._intestazioni = [str(e) for e in etichette]
+
+    def horizontalHeaderLabels(self):
+        return list(self._intestazioni)
+
+    def setVerticalHeaderLabels(self, etichette):
+        self._intestazioni_verticali = [str(e) for e in etichette]
+
+    def verticalHeader(self):
+        return self._verticale
+
+    def horizontalHeader(self):
+        return self._orizzontale
+
+    def setEditTriggers(self, trigger):
+        self._trigger = trigger
+
+    def editTriggers(self):
+        return getattr(self, "_trigger", 0)
+
+    def setSelectionMode(self, modo):
+        self._modo_selezione = modo
+
+    def selectionMode(self):
+        return getattr(self, "_modo_selezione", 0)
+
+    def resizeColumnsToContents(self):
+        pass
+
+    def setSortingEnabled(self, attivo):
+        self._ordinata = bool(attivo)
+
+    def setCellWidget(self, riga, colonna, widget):
+        self._widget_celle = getattr(self, "_widget_celle", {})
+        self._widget_celle[(riga, colonna)] = widget
+
+    def cellWidget(self, riga, colonna):
+        return getattr(self, "_widget_celle", {}).get((riga, colonna))
+
+    def selectedItems(self):
+        return []
+
+    def rowCount_valorizzate(self):
+        return len({riga for riga, _ in self._celle})
+
+
+class QApplication(_Qualsiasi):
+    """Applicazione finta: `processEvents` non fa nulla, i cursori si registrano."""
+
+    cursore_override = None
+    richieste_process_events = 0
+
+    def __init__(self, *args, **kwargs):
+        pass
+
+    @staticmethod
+    def processEvents(*args, **kwargs):
+        QApplication.richieste_process_events += 1
+        return True
+
+    @staticmethod
+    def setOverrideCursor(cursore):
+        QApplication.cursore_override = cursore
+
+    @staticmethod
+    def restoreOverrideCursor():
+        QApplication.cursore_override = None
+
+    @staticmethod
+    def overrideCursor():
+        return QApplication.cursore_override
+
+    @staticmethod
+    def instance():
+        return QApplication()
+
+    @staticmethod
+    def applicationDirPath():
+        return "/tmp/finto-qgis"
+
+
+class QWizardPage(QWidget):
+    """Pagina di wizard finta: `completeChanged` vero, titolo e sottotitolo."""
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.completeChanged = _SegnaleWidget(self)
+        self._titolo = ""
+        self._sottotitolo = ""
+        self._finale = False
+        self._impegno = False
+
+    def setTitle(self, titolo):
+        self._titolo = "" if titolo is None else str(titolo)
+
+    def title(self):
+        return self._titolo
+
+    def setSubTitle(self, sottotitolo):
+        self._sottotitolo = "" if sottotitolo is None else str(sottotitolo)
+
+    def subTitle(self):
+        return self._sottotitolo
+
+    def setFinalPage(self, finale):
+        self._finale = bool(finale)
+
+    def isFinalPage(self):
+        return self._finale
+
+    def setCommitPage(self, impegno):
+        self._impegno = bool(impegno)
+
+    def isCommitPage(self):
+        return self._impegno
+
+    def isComplete(self):  # noqa: N802  — sovrascritta dalle pagine vere
+        return True
+
+    def initializePage(self):  # noqa: N802
+        pass
+
+    def cleanupPage(self):  # noqa: N802
+        pass
+
+    def validatePage(self):  # noqa: N802
+        return True
+
+    def nextId(self):  # noqa: N802
+        return -1
+
+
+class QWizard(QWidget):
+    """Wizard finto: pagine, pulsanti standard (abilitabili) e pulsanti testi."""
+
+    # Stessi valori di Qt: i test possono confrontare WindowButton/Etichetta.
+    BackButton = 0
+    NextButton = 1
+    CommitButton = 2
+    FinishButton = 3
+    CancelButton = 4
+    HelpButton = 5
+    CustomButton1 = 6
+    CustomButton2 = 7
+    CustomButton3 = 8
+    NoButton = -1
+
+    Stretch = 0
+    ClassicStyle = 0
+    ModernStyle = 1
+    MacStyle = 2
+    AeroStyle = 3
+
+    NoBackButtonOnStartPage = 1
+    NoBackButtonOnLastPage = 2
+    NoCancelButton = 4
+    HaveHelpButton = 8
+    HaveFinishButtonOnEarlyPages = 16
+    DisabledBackButtonOnLastPage = 32
+    HaveNextButtonOnLastPage = 64
+
+    def __init__(self, parent=None, *args, **kwargs):
+        super().__init__(parent)
+        self.pagine = []
+        self.esito = None                 # "accettato" / "rifiutato" dopo accept/reject
+        self.accepted = _SegnaleWidget(self)
+        self.rejected = _SegnaleWidget(self)
+        self.finished = _SegnaleWidget(self)
+        self.currentIdChanged = _SegnaleWidget(self)
+        self.helpRequested = _SegnaleWidget(self)
+        self._pulsanti = {}
+        self._testi_pulsanti = {}
+        self._stile = self.ClassicStyle
+        self._opzioni = set()
+        self._indice_corrente = -1
+        for identificativo in (self.BackButton, self.NextButton, self.FinishButton,
+                               self.CancelButton, self.HelpButton):
+            self._pulsanti[identificativo] = QPushButton()
+
+    # -- pagine -------------------------------------------------------------
+    def addPage(self, pagina):
+        self.pagine.append(pagina)
+        pagina.setParent(self)
+        self.addChild(pagina)
+        if self._indice_corrente < 0:
+            self._indice_corrente = 0
+        return self.pageIds()[-1]
+
+    def pageIds(self):
+        return list(range(len(self.pagine)))
+
+    def page(self, identificativo):
+        return self.pagine[identificativo]
+
+    def currentId(self):
+        return self._indice_corrente
+
+    def setCurrentId(self, identificativo):
+        if identificativo != self._indice_corrente:
+            self._indice_corrente = identificativo
+            self.currentIdChanged.emit(identificativo)
+            pagina = self.pagine[identificativo] if 0 <= identificativo < len(self.pagine) else None
+            if pagina is not None:
+                pagina.initializePage()
+
+    def currentPage(self):
+        if 0 <= self._indice_corrente < len(self.pagine):
+            return self.pagine[self._indice_corrente]
+        return None
+
+    def next(self):
+        self.setCurrentId(min(self._indice_corrente + 1, len(self.pagine) - 1))
+
+    def back(self):
+        self.setCurrentId(max(self._indice_corrente - 1, 0))
+
+    def restart(self):
+        self.setCurrentId(0)
+
+    # -- pulsanti -----------------------------------------------------------
+    def setButtonText(self, identificativo, testo):
+        self._testi_pulsanti[identificativo] = str(testo)
+        if identificativo in self._pulsanti:
+            self._pulsanti[identificativo].setText(testo)
+
+    def buttonText(self, identificativo):
+        return self._testi_pulsanti.get(identificativo, "")
+
+    def button(self, identificativo):
+        if identificativo not in self._pulsanti:
+            self._pulsanti[identificativo] = QPushButton()
+        return self._pulsanti[identificativo]
+
+    def setButton(self, identificativo, pulsante):
+        self._pulsanti[identificativo] = pulsante
+
+    def setDefaultButton(self, identificativo):
+        self._predefinito = identificativo
+
+    # -- aspetto / opzioni --------------------------------------------------
+    def setWizardStyle(self, stile):
+        self._stile = stile
+
+    def wizardStyle(self):
+        return self._stile
+
+    def setOption(self, opzione, attivo=True):
+        if attivo:
+            self._opzioni.add(opzione)
+        else:
+            self._opzioni.discard(opzione)
+
+    def testOption(self, opzione):
+        return opzione in self._opzioni
+
+    def setOptions(self, opzioni):
+        self._opzioni = set(opzioni)
+
+    def setTitleFormat(self, formato):
+        self._formato_titolo = formato
+
+    def setPixmap(self, ruolo, pixmap):
+        self._pixmap = (ruolo, pixmap)
+
+    # -- esito --------------------------------------------------------------
+    def accept(self):
+        self.esito = "accettato"
+        self.accepted.emit()
+
+    def reject(self):
+        self.esito = "rifiutato"
+        self.rejected.emit()
+
+    def done(self, codice):
+        self.esito = "accettato" if codice else "rifiutato"
+
+    def exec_(self):
+        return 0
+
+    exec = exec_
+
+    def open(self):
+        pass
+
+    def __repr__(self):
+        return "QWizard(%d pagine, esito=%r)" % (len(self.pagine), self.esito)
+
+
+# ---------------------------------------------------------------------------
 # Costruzione e iniezione dei moduli
 
 
@@ -1215,34 +2184,34 @@ def install(force=False):
         "QInputDialog": QInputDialog,
         "QFileDialog": QFileDialog,
         "QDialog": _crea_stub("QDialog"),
-        "QWizard": _crea_stub("QWizard"),
-        "QWizardPage": _crea_stub("QWizardPage"),
-        "QWidget": _crea_stub("QWidget"),
-        "QLabel": _crea_stub("QLabel"),
-        "QLineEdit": _crea_stub("QLineEdit"),
+        "QWizard": QWizard,
+        "QWizardPage": QWizardPage,
+        "QWidget": QWidget,
+        "QLabel": QLabel,
+        "QLineEdit": QLineEdit,
         "QPlainTextEdit": _crea_stub("QPlainTextEdit"),
         "QTextEdit": _crea_stub("QTextEdit"),
-        "QPushButton": _crea_stub("QPushButton"),
-        "QToolButton": _crea_stub("QToolButton"),
-        "QCheckBox": _crea_stub("QCheckBox"),
-        "QComboBox": _crea_stub("QComboBox"),
-        "QRadioButton": _crea_stub("QRadioButton"),
+        "QPushButton": QPushButton,
+        "QToolButton": QPushButton,
+        "QCheckBox": QCheckBox,
+        "QComboBox": QComboBox,
+        "QRadioButton": QRadioButton,
         "QSpinBox": _crea_stub("QSpinBox"),
         "QDoubleSpinBox": _crea_stub("QDoubleSpinBox"),
-        "QGroupBox": _crea_stub("QGroupBox"),
+        "QGroupBox": QGroupBox,
         "QListView": _crea_stub("QListView"),
         "QListWidget": _crea_stub("QListWidget"),
         "QListWidgetItem": _crea_stub("QListWidgetItem"),
-        "QTableWidget": _crea_stub("QTableWidget"),
-        "QTableWidgetItem": _crea_stub("QTableWidgetItem"),
+        "QTableWidget": QTableWidget,
+        "QTableWidgetItem": QTableWidgetItem,
         "QProgressDialog": _crea_stub("QProgressDialog"),
-        "QProgressBar": _crea_stub("QProgressBar"),
-        "QApplication": _crea_stub("QApplication"),
+        "QProgressBar": QProgressBar,
+        "QApplication": QApplication,
         "QDialogButtonBox": _crea_stub("QDialogButtonBox"),
-        "QVBoxLayout": _crea_stub("QVBoxLayout"),
-        "QHBoxLayout": _crea_stub("QHBoxLayout"),
-        "QFormLayout": _crea_stub("QFormLayout"),
-        "QGridLayout": _crea_stub("QGridLayout"),
+        "QVBoxLayout": QVBoxLayout,
+        "QHBoxLayout": QHBoxLayout,
+        "QFormLayout": _FakeLayout,
+        "QGridLayout": QGridLayout,
         "QStackedWidget": _crea_stub("QStackedWidget"),
         "QTabWidget": _crea_stub("QTabWidget"),
         "QScrollArea": _crea_stub("QScrollArea"),
@@ -1366,6 +2335,8 @@ def azzera_tutto():
     FakeLayer.registro_sorgenti.clear()
     del REGISTRO_DIALOGHI[:]
     risposte.svuota()
+    QApplication.cursore_override = None
+    QApplication.richieste_process_events = 0
 
 
 # ---------------------------------------------------------------------------
