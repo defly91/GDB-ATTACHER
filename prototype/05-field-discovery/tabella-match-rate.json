@@ -1,0 +1,1269 @@
+{
+  "cartella_base": "C:\\Users\\Stefano\\Documents\\Prove Claude\\GDB-ATTACHER\\prototype\\05-field-discovery\\esempi\\foto",
+  "modalita": {
+    "Senza cartella base (discovery sintattica)": {
+      "Ril_ApFp_contatore": {
+        "righe": [
+          {
+            "campo": "filefoto",
+            "tipo": "stringa",
+            "n_valori": 12,
+            "n_non_null": 11,
+            "n_esistenti": 0,
+            "nome_match": true,
+            "ext_rate": 0.909,
+            "path_rate": 0.909,
+            "esiste_rate": 0.0,
+            "multi_rate": 0.0,
+            "guid_rate": 0.0,
+            "num_rate": 0.0,
+            "remoto_rate": 0.0,
+            "livello": "B",
+            "motivo": "valori con estensione di file, ma non verificati su disco",
+            "esempi": [
+              "contatore/ACQ_0001.jpg",
+              "contatore/ACQ_0002.jpg"
+            ]
+          },
+          {
+            "campo": "foto_note",
+            "tipo": "stringa",
+            "n_valori": 12,
+            "n_non_null": 12,
+            "n_esistenti": 0,
+            "nome_match": true,
+            "ext_rate": 0.0,
+            "path_rate": 0.0,
+            "esiste_rate": 0.0,
+            "multi_rate": 0.0,
+            "guid_rate": 0.0,
+            "num_rate": 0.0,
+            "remoto_rate": 0.0,
+            "livello": "C",
+            "motivo": "solo il nome suggerisce un campo foto",
+            "esempi": [
+              "ok",
+              "da controllare"
+            ]
+          },
+          {
+            "campo": "codice",
+            "tipo": "stringa",
+            "n_valori": 12,
+            "n_non_null": 12,
+            "n_esistenti": 0,
+            "nome_match": false,
+            "ext_rate": 0.0,
+            "path_rate": 0.0,
+            "esiste_rate": 0.0,
+            "multi_rate": 0.0,
+            "guid_rate": 0.0,
+            "num_rate": 0.0,
+            "remoto_rate": 0.0,
+            "livello": "D",
+            "motivo": "nessun segnale di nome o di valore",
+            "esempi": [
+              "ACQ-0001",
+              "ACQ-0002"
+            ]
+          },
+          {
+            "campo": "data_rilievo",
+            "tipo": "data",
+            "n_valori": 12,
+            "n_non_null": 12,
+            "n_esistenti": 0,
+            "nome_match": false,
+            "ext_rate": 0.0,
+            "path_rate": 0.0,
+            "esiste_rate": 0.0,
+            "multi_rate": 0.0,
+            "guid_rate": 0.0,
+            "num_rate": 0.0,
+            "remoto_rate": 0.0,
+            "livello": "D",
+            "motivo": "tipo non testuale (data)",
+            "esempi": [
+              "PyQt5.QtCore.QDateTime(2026, 3, 1, 0, 0)",
+              "PyQt5.QtCore.QDateTime(2026, 3, 2, 0, 0)"
+            ]
+          },
+          {
+            "campo": "fid",
+            "tipo": "numerico",
+            "n_valori": 12,
+            "n_non_null": 12,
+            "n_esistenti": 0,
+            "nome_match": false,
+            "ext_rate": 0.0,
+            "path_rate": 0.0,
+            "esiste_rate": 0.0,
+            "multi_rate": 0.0,
+            "guid_rate": 0.0,
+            "num_rate": 1.0,
+            "remoto_rate": 0.0,
+            "livello": "D",
+            "motivo": "tipo non testuale (numerico)",
+            "esempi": [
+              "1",
+              "2"
+            ]
+          },
+          {
+            "campo": "GlobalID",
+            "tipo": "stringa",
+            "n_valori": 12,
+            "n_non_null": 12,
+            "n_esistenti": 0,
+            "nome_match": false,
+            "ext_rate": 0.0,
+            "path_rate": 0.0,
+            "esiste_rate": 0.0,
+            "multi_rate": 0.0,
+            "guid_rate": 1.0,
+            "num_rate": 0.0,
+            "remoto_rate": 0.0,
+            "livello": "D",
+            "motivo": "valori GUID (probabile GlobalID, da escludere)",
+            "esempi": [
+              "{A1B2C3D4-E5F6-47A8-B9C0-D1E2F3A4B501}",
+              "{A1B2C3D4-E5F6-47A8-B9C0-D1E2F3A4B502}"
+            ]
+          },
+          {
+            "campo": "nome_operatore",
+            "tipo": "stringa",
+            "n_valori": 12,
+            "n_non_null": 12,
+            "n_esistenti": 0,
+            "nome_match": false,
+            "ext_rate": 0.0,
+            "path_rate": 0.0,
+            "esiste_rate": 0.0,
+            "multi_rate": 0.0,
+            "guid_rate": 0.0,
+            "num_rate": 0.0,
+            "remoto_rate": 0.0,
+            "livello": "D",
+            "motivo": "nessun segnale di nome o di valore",
+            "esempi": [
+              "M. Rossi",
+              "L. Bianchi"
+            ]
+          },
+          {
+            "campo": "note",
+            "tipo": "stringa",
+            "n_valori": 12,
+            "n_non_null": 12,
+            "n_esistenti": 0,
+            "nome_match": false,
+            "ext_rate": 0.0,
+            "path_rate": 0.0,
+            "esiste_rate": 0.0,
+            "multi_rate": 0.0,
+            "guid_rate": 0.0,
+            "num_rate": 0.0,
+            "remoto_rate": 0.0,
+            "livello": "D",
+            "motivo": "nessun segnale di nome o di valore",
+            "esempi": [
+              "sopralluogo regolare",
+              "sopralluogo regolare"
+            ]
+          },
+          {
+            "campo": "quota",
+            "tipo": "numerico",
+            "n_valori": 12,
+            "n_non_null": 12,
+            "n_esistenti": 0,
+            "nome_match": false,
+            "ext_rate": 0.0,
+            "path_rate": 0.0,
+            "esiste_rate": 0.0,
+            "multi_rate": 0.0,
+            "guid_rate": 0.0,
+            "num_rate": 1.0,
+            "remoto_rate": 0.0,
+            "livello": "D",
+            "motivo": "tipo non testuale (numerico)",
+            "esempi": [
+              "120.5",
+              "121.2"
+            ]
+          }
+        ],
+        "verifica": {
+          "attesi": [
+            "filefoto"
+          ],
+          "strict": [
+            "filefoto"
+          ],
+          "soft": [
+            "foto_note"
+          ],
+          "tp_strict": [
+            "filefoto"
+          ],
+          "fn": [],
+          "fn_soft": [],
+          "fp_strict": [],
+          "c_attese": [],
+          "c_extra": [],
+          "c_neutre": [
+            "foto_note"
+          ]
+        }
+      },
+      "Ril_ApFp_superficie": {
+        "righe": [
+          {
+            "campo": "FOTO_EST",
+            "tipo": "stringa",
+            "n_valori": 12,
+            "n_non_null": 10,
+            "n_esistenti": 0,
+            "nome_match": true,
+            "ext_rate": 1.0,
+            "path_rate": 1.0,
+            "esiste_rate": 0.0,
+            "multi_rate": 0.0,
+            "guid_rate": 0.0,
+            "num_rate": 0.0,
+            "remoto_rate": 0.0,
+            "livello": "B",
+            "motivo": "valori con estensione di file, ma non verificati su disco",
+            "esempi": [
+              "superficie/EST_0001.jpg",
+              "superficie/EST_0002.jpg"
+            ]
+          },
+          {
+            "campo": "FOTO_INT",
+            "tipo": "stringa",
+            "n_valori": 12,
+            "n_non_null": 10,
+            "n_esistenti": 0,
+            "nome_match": true,
+            "ext_rate": 1.0,
+            "path_rate": 1.0,
+            "esiste_rate": 0.0,
+            "multi_rate": 0.0,
+            "guid_rate": 0.0,
+            "num_rate": 0.0,
+            "remoto_rate": 0.0,
+            "livello": "B",
+            "motivo": "valori con estensione di file, ma non verificati su disco",
+            "esempi": [
+              "superficie/INT_0001.jpg",
+              "superficie/INT_0002.jpg"
+            ]
+          },
+          {
+            "campo": "foto_impianto",
+            "tipo": "stringa",
+            "n_valori": 12,
+            "n_non_null": 10,
+            "n_esistenti": 0,
+            "nome_match": true,
+            "ext_rate": 0.0,
+            "path_rate": 0.0,
+            "esiste_rate": 0.0,
+            "multi_rate": 0.0,
+            "guid_rate": 0.0,
+            "num_rate": 0.0,
+            "remoto_rate": 0.0,
+            "livello": "C",
+            "motivo": "solo il nome suggerisce un campo foto",
+            "esempi": [
+              "SS_0001",
+              "SS_0002"
+            ]
+          },
+          {
+            "campo": "link_foto",
+            "tipo": "stringa",
+            "n_valori": 12,
+            "n_non_null": 12,
+            "n_esistenti": 0,
+            "nome_match": true,
+            "ext_rate": 1.0,
+            "path_rate": 0.0,
+            "esiste_rate": 0.0,
+            "multi_rate": 0.0,
+            "guid_rate": 0.0,
+            "num_rate": 0.0,
+            "remoto_rate": 1.0,
+            "livello": "D",
+            "motivo": "URL remoti o percorso non locale",
+            "esempi": [
+              "https://esempio.it/foto/EST_0001.jpg",
+              "https://esempio.it/foto/EST_0002.jpg"
+            ]
+          },
+          {
+            "campo": "data_foto",
+            "tipo": "data",
+            "n_valori": 12,
+            "n_non_null": 12,
+            "n_esistenti": 0,
+            "nome_match": true,
+            "ext_rate": 0.0,
+            "path_rate": 0.0,
+            "esiste_rate": 0.0,
+            "multi_rate": 0.0,
+            "guid_rate": 0.0,
+            "num_rate": 0.0,
+            "remoto_rate": 0.0,
+            "livello": "D",
+            "motivo": "tipo non testuale (data)",
+            "esempi": [
+              "PyQt5.QtCore.QDate(2026, 4, 1)",
+              "PyQt5.QtCore.QDate(2026, 4, 2)"
+            ]
+          },
+          {
+            "campo": "fid",
+            "tipo": "numerico",
+            "n_valori": 12,
+            "n_non_null": 12,
+            "n_esistenti": 0,
+            "nome_match": false,
+            "ext_rate": 0.0,
+            "path_rate": 0.0,
+            "esiste_rate": 0.0,
+            "multi_rate": 0.0,
+            "guid_rate": 0.0,
+            "num_rate": 1.0,
+            "remoto_rate": 0.0,
+            "livello": "D",
+            "motivo": "tipo non testuale (numerico)",
+            "esempi": [
+              "1",
+              "2"
+            ]
+          },
+          {
+            "campo": "foto_archiviata",
+            "tipo": "stringa",
+            "n_valori": 12,
+            "n_non_null": 0,
+            "n_esistenti": 0,
+            "nome_match": true,
+            "ext_rate": 0.0,
+            "path_rate": 0.0,
+            "esiste_rate": 0.0,
+            "multi_rate": 0.0,
+            "guid_rate": 0.0,
+            "num_rate": 0.0,
+            "remoto_rate": 0.0,
+            "livello": "D",
+            "motivo": "nessun valore non nullo",
+            "esempi": []
+          },
+          {
+            "campo": "GLOBALID",
+            "tipo": "stringa",
+            "n_valori": 12,
+            "n_non_null": 12,
+            "n_esistenti": 0,
+            "nome_match": false,
+            "ext_rate": 0.0,
+            "path_rate": 0.0,
+            "esiste_rate": 0.0,
+            "multi_rate": 0.0,
+            "guid_rate": 1.0,
+            "num_rate": 0.0,
+            "remoto_rate": 0.0,
+            "livello": "D",
+            "motivo": "valori GUID (probabile GlobalID, da escludere)",
+            "esempi": [
+              "{A1B2C3D4-E5F6-47A8-B9C0-D1E2F3A4B521}",
+              "{A1B2C3D4-E5F6-47A8-B9C0-D1E2F3A4B522}"
+            ]
+          },
+          {
+            "campo": "id_foto",
+            "tipo": "stringa",
+            "n_valori": 12,
+            "n_non_null": 12,
+            "n_esistenti": 0,
+            "nome_match": true,
+            "ext_rate": 0.0,
+            "path_rate": 0.0,
+            "esiste_rate": 0.0,
+            "multi_rate": 0.0,
+            "guid_rate": 0.0,
+            "num_rate": 1.0,
+            "remoto_rate": 0.0,
+            "livello": "D",
+            "motivo": "valori numerici",
+            "esempi": [
+              "1",
+              "2"
+            ]
+          }
+        ],
+        "verifica": {
+          "attesi": [
+            "FOTO_EST",
+            "FOTO_INT",
+            "foto_impianto"
+          ],
+          "strict": [
+            "FOTO_EST",
+            "FOTO_INT"
+          ],
+          "soft": [
+            "foto_impianto"
+          ],
+          "tp_strict": [
+            "FOTO_EST",
+            "FOTO_INT"
+          ],
+          "fn": [],
+          "fn_soft": [
+            "foto_impianto"
+          ],
+          "fp_strict": [],
+          "c_attese": [],
+          "c_extra": [],
+          "c_neutre": []
+        }
+      },
+      "Ril_ApFp_docs": {
+        "righe": [
+          {
+            "campo": "doc_allegato",
+            "tipo": "stringa",
+            "n_valori": 12,
+            "n_non_null": 10,
+            "n_esistenti": 0,
+            "nome_match": true,
+            "ext_rate": 1.0,
+            "path_rate": 1.0,
+            "esiste_rate": 0.0,
+            "multi_rate": 0.0,
+            "guid_rate": 0.0,
+            "num_rate": 0.0,
+            "remoto_rate": 0.0,
+            "livello": "B",
+            "motivo": "valori con estensione di file, ma non verificati su disco",
+            "esempi": [
+              "docs/planimetria_01.pdf",
+              "docs/planimetria_02.pdf"
+            ]
+          },
+          {
+            "campo": "foto_multiple",
+            "tipo": "stringa",
+            "n_valori": 12,
+            "n_non_null": 10,
+            "n_esistenti": 0,
+            "nome_match": true,
+            "ext_rate": 1.0,
+            "path_rate": 1.0,
+            "esiste_rate": 0.0,
+            "multi_rate": 0.6,
+            "guid_rate": 0.0,
+            "num_rate": 0.0,
+            "remoto_rate": 0.0,
+            "livello": "B",
+            "motivo": "valori con estensione di file, ma non verificati su disco; 60% valori multipli",
+            "esempi": [
+              "superficie/EST_0001.jpg;superficie/INT_0001.jpg",
+              "superficie/EST_0001.jpg;superficie/INT_0001.jpg"
+            ]
+          },
+          {
+            "campo": "riferimento_relazione",
+            "tipo": "stringa",
+            "n_valori": 12,
+            "n_non_null": 10,
+            "n_esistenti": 0,
+            "nome_match": false,
+            "ext_rate": 1.0,
+            "path_rate": 1.0,
+            "esiste_rate": 0.0,
+            "multi_rate": 0.0,
+            "guid_rate": 0.0,
+            "num_rate": 0.0,
+            "remoto_rate": 0.0,
+            "livello": "B",
+            "motivo": "valori con estensione di file, ma non verificati su disco",
+            "esempi": [
+              "docs/planimetria_01.pdf",
+              "docs/planimetria_02.pdf"
+            ]
+          },
+          {
+            "campo": "note_doc",
+            "tipo": "stringa",
+            "n_valori": 12,
+            "n_non_null": 12,
+            "n_esistenti": 0,
+            "nome_match": true,
+            "ext_rate": 0.0,
+            "path_rate": 0.0,
+            "esiste_rate": 0.0,
+            "multi_rate": 0.0,
+            "guid_rate": 0.0,
+            "num_rate": 0.0,
+            "remoto_rate": 0.0,
+            "livello": "C",
+            "motivo": "solo il nome suggerisce un campo foto",
+            "esempi": [
+              "archiviato",
+              "archiviato"
+            ]
+          },
+          {
+            "campo": "data_doc",
+            "tipo": "data",
+            "n_valori": 12,
+            "n_non_null": 12,
+            "n_esistenti": 0,
+            "nome_match": true,
+            "ext_rate": 0.0,
+            "path_rate": 0.0,
+            "esiste_rate": 0.0,
+            "multi_rate": 0.0,
+            "guid_rate": 0.0,
+            "num_rate": 0.0,
+            "remoto_rate": 0.0,
+            "livello": "D",
+            "motivo": "tipo non testuale (data)",
+            "esempi": [
+              "PyQt5.QtCore.QDate(2026, 5, 1)",
+              "PyQt5.QtCore.QDate(2026, 5, 2)"
+            ]
+          },
+          {
+            "campo": "descrizione",
+            "tipo": "stringa",
+            "n_valori": 12,
+            "n_non_null": 12,
+            "n_esistenti": 0,
+            "nome_match": false,
+            "ext_rate": 0.0,
+            "path_rate": 0.0,
+            "esiste_rate": 0.0,
+            "multi_rate": 0.0,
+            "guid_rate": 0.0,
+            "num_rate": 0.0,
+            "remoto_rate": 0.0,
+            "livello": "D",
+            "motivo": "nessun segnale di nome o di valore",
+            "esempi": [
+              "impianto conforme",
+              "impianto conforme"
+            ]
+          },
+          {
+            "campo": "fid",
+            "tipo": "numerico",
+            "n_valori": 12,
+            "n_non_null": 12,
+            "n_esistenti": 0,
+            "nome_match": false,
+            "ext_rate": 0.0,
+            "path_rate": 0.0,
+            "esiste_rate": 0.0,
+            "multi_rate": 0.0,
+            "guid_rate": 0.0,
+            "num_rate": 1.0,
+            "remoto_rate": 0.0,
+            "livello": "D",
+            "motivo": "tipo non testuale (numerico)",
+            "esempi": [
+              "1",
+              "2"
+            ]
+          },
+          {
+            "campo": "GLOBALID",
+            "tipo": "stringa",
+            "n_valori": 12,
+            "n_non_null": 12,
+            "n_esistenti": 0,
+            "nome_match": false,
+            "ext_rate": 0.0,
+            "path_rate": 0.0,
+            "esiste_rate": 0.0,
+            "multi_rate": 0.0,
+            "guid_rate": 1.0,
+            "num_rate": 0.0,
+            "remoto_rate": 0.0,
+            "livello": "D",
+            "motivo": "valori GUID (probabile GlobalID, da escludere)",
+            "esempi": [
+              "{A1B2C3D4-E5F6-47A8-B9C0-D1E2F3A4B541}",
+              "{A1B2C3D4-E5F6-47A8-B9C0-D1E2F3A4B542}"
+            ]
+          }
+        ],
+        "verifica": {
+          "attesi": [
+            "doc_allegato",
+            "foto_multiple",
+            "riferimento_relazione"
+          ],
+          "strict": [
+            "doc_allegato",
+            "foto_multiple",
+            "riferimento_relazione"
+          ],
+          "soft": [
+            "note_doc"
+          ],
+          "tp_strict": [
+            "doc_allegato",
+            "foto_multiple",
+            "riferimento_relazione"
+          ],
+          "fn": [],
+          "fn_soft": [],
+          "fp_strict": [],
+          "c_attese": [],
+          "c_extra": [
+            "note_doc"
+          ],
+          "c_neutre": []
+        }
+      }
+    },
+    "Con cartella base = esempi/foto": {
+      "Ril_ApFp_contatore": {
+        "righe": [
+          {
+            "campo": "filefoto",
+            "tipo": "stringa",
+            "n_valori": 12,
+            "n_non_null": 11,
+            "n_esistenti": 10,
+            "nome_match": true,
+            "ext_rate": 1.0,
+            "path_rate": 1.0,
+            "esiste_rate": 0.909,
+            "multi_rate": 0.0,
+            "guid_rate": 0.0,
+            "num_rate": 0.0,
+            "remoto_rate": 0.0,
+            "livello": "A",
+            "motivo": "file trovati nella cartella base (10/11)",
+            "esempi": [
+              "contatore/ACQ_0001.jpg",
+              "contatore/ACQ_0002.jpg"
+            ]
+          },
+          {
+            "campo": "foto_note",
+            "tipo": "stringa",
+            "n_valori": 12,
+            "n_non_null": 12,
+            "n_esistenti": 0,
+            "nome_match": true,
+            "ext_rate": 0.0,
+            "path_rate": 0.0,
+            "esiste_rate": 0.0,
+            "multi_rate": 0.0,
+            "guid_rate": 0.0,
+            "num_rate": 0.0,
+            "remoto_rate": 0.0,
+            "livello": "C",
+            "motivo": "solo il nome suggerisce un campo foto",
+            "esempi": [
+              "ok",
+              "da controllare"
+            ]
+          },
+          {
+            "campo": "codice",
+            "tipo": "stringa",
+            "n_valori": 12,
+            "n_non_null": 12,
+            "n_esistenti": 0,
+            "nome_match": false,
+            "ext_rate": 0.0,
+            "path_rate": 0.0,
+            "esiste_rate": 0.0,
+            "multi_rate": 0.0,
+            "guid_rate": 0.0,
+            "num_rate": 0.0,
+            "remoto_rate": 0.0,
+            "livello": "D",
+            "motivo": "nessun segnale di nome o di valore",
+            "esempi": [
+              "ACQ-0001",
+              "ACQ-0002"
+            ]
+          },
+          {
+            "campo": "data_rilievo",
+            "tipo": "data",
+            "n_valori": 12,
+            "n_non_null": 12,
+            "n_esistenti": 0,
+            "nome_match": false,
+            "ext_rate": 0.0,
+            "path_rate": 0.0,
+            "esiste_rate": 0.0,
+            "multi_rate": 0.0,
+            "guid_rate": 0.0,
+            "num_rate": 0.0,
+            "remoto_rate": 0.0,
+            "livello": "D",
+            "motivo": "tipo non testuale (data)",
+            "esempi": [
+              "PyQt5.QtCore.QDateTime(2026, 3, 1, 0, 0)",
+              "PyQt5.QtCore.QDateTime(2026, 3, 2, 0, 0)"
+            ]
+          },
+          {
+            "campo": "fid",
+            "tipo": "numerico",
+            "n_valori": 12,
+            "n_non_null": 12,
+            "n_esistenti": 0,
+            "nome_match": false,
+            "ext_rate": 0.0,
+            "path_rate": 0.0,
+            "esiste_rate": 0.0,
+            "multi_rate": 0.0,
+            "guid_rate": 0.0,
+            "num_rate": 1.0,
+            "remoto_rate": 0.0,
+            "livello": "D",
+            "motivo": "tipo non testuale (numerico)",
+            "esempi": [
+              "1",
+              "2"
+            ]
+          },
+          {
+            "campo": "GlobalID",
+            "tipo": "stringa",
+            "n_valori": 12,
+            "n_non_null": 12,
+            "n_esistenti": 0,
+            "nome_match": false,
+            "ext_rate": 0.0,
+            "path_rate": 0.0,
+            "esiste_rate": 0.0,
+            "multi_rate": 0.0,
+            "guid_rate": 1.0,
+            "num_rate": 0.0,
+            "remoto_rate": 0.0,
+            "livello": "D",
+            "motivo": "valori GUID (probabile GlobalID, da escludere)",
+            "esempi": [
+              "{A1B2C3D4-E5F6-47A8-B9C0-D1E2F3A4B501}",
+              "{A1B2C3D4-E5F6-47A8-B9C0-D1E2F3A4B502}"
+            ]
+          },
+          {
+            "campo": "nome_operatore",
+            "tipo": "stringa",
+            "n_valori": 12,
+            "n_non_null": 12,
+            "n_esistenti": 0,
+            "nome_match": false,
+            "ext_rate": 0.0,
+            "path_rate": 0.0,
+            "esiste_rate": 0.0,
+            "multi_rate": 0.0,
+            "guid_rate": 0.0,
+            "num_rate": 0.0,
+            "remoto_rate": 0.0,
+            "livello": "D",
+            "motivo": "nessun segnale di nome o di valore",
+            "esempi": [
+              "M. Rossi",
+              "L. Bianchi"
+            ]
+          },
+          {
+            "campo": "note",
+            "tipo": "stringa",
+            "n_valori": 12,
+            "n_non_null": 12,
+            "n_esistenti": 0,
+            "nome_match": false,
+            "ext_rate": 0.0,
+            "path_rate": 0.0,
+            "esiste_rate": 0.0,
+            "multi_rate": 0.0,
+            "guid_rate": 0.0,
+            "num_rate": 0.0,
+            "remoto_rate": 0.0,
+            "livello": "D",
+            "motivo": "nessun segnale di nome o di valore",
+            "esempi": [
+              "sopralluogo regolare",
+              "sopralluogo regolare"
+            ]
+          },
+          {
+            "campo": "quota",
+            "tipo": "numerico",
+            "n_valori": 12,
+            "n_non_null": 12,
+            "n_esistenti": 0,
+            "nome_match": false,
+            "ext_rate": 0.0,
+            "path_rate": 0.0,
+            "esiste_rate": 0.0,
+            "multi_rate": 0.0,
+            "guid_rate": 0.0,
+            "num_rate": 1.0,
+            "remoto_rate": 0.0,
+            "livello": "D",
+            "motivo": "tipo non testuale (numerico)",
+            "esempi": [
+              "120.5",
+              "121.2"
+            ]
+          }
+        ],
+        "verifica": {
+          "attesi": [
+            "filefoto"
+          ],
+          "strict": [
+            "filefoto"
+          ],
+          "soft": [
+            "foto_note"
+          ],
+          "tp_strict": [
+            "filefoto"
+          ],
+          "fn": [],
+          "fn_soft": [],
+          "fp_strict": [],
+          "c_attese": [],
+          "c_extra": [],
+          "c_neutre": [
+            "foto_note"
+          ]
+        }
+      },
+      "Ril_ApFp_superficie": {
+        "righe": [
+          {
+            "campo": "FOTO_EST",
+            "tipo": "stringa",
+            "n_valori": 12,
+            "n_non_null": 10,
+            "n_esistenti": 8,
+            "nome_match": true,
+            "ext_rate": 1.0,
+            "path_rate": 1.0,
+            "esiste_rate": 0.8,
+            "multi_rate": 0.0,
+            "guid_rate": 0.0,
+            "num_rate": 0.0,
+            "remoto_rate": 0.0,
+            "livello": "A",
+            "motivo": "file trovati nella cartella base (8/10)",
+            "esempi": [
+              "superficie/EST_0001.jpg",
+              "superficie/EST_0002.jpg"
+            ]
+          },
+          {
+            "campo": "FOTO_INT",
+            "tipo": "stringa",
+            "n_valori": 12,
+            "n_non_null": 10,
+            "n_esistenti": 8,
+            "nome_match": true,
+            "ext_rate": 1.0,
+            "path_rate": 1.0,
+            "esiste_rate": 0.8,
+            "multi_rate": 0.0,
+            "guid_rate": 0.0,
+            "num_rate": 0.0,
+            "remoto_rate": 0.0,
+            "livello": "A",
+            "motivo": "file trovati nella cartella base (8/10)",
+            "esempi": [
+              "superficie/INT_0001.jpg",
+              "superficie/INT_0002.jpg"
+            ]
+          },
+          {
+            "campo": "foto_impianto",
+            "tipo": "stringa",
+            "n_valori": 12,
+            "n_non_null": 10,
+            "n_esistenti": 8,
+            "nome_match": true,
+            "ext_rate": 0.0,
+            "path_rate": 0.0,
+            "esiste_rate": 0.8,
+            "multi_rate": 0.0,
+            "guid_rate": 0.0,
+            "num_rate": 0.0,
+            "remoto_rate": 0.0,
+            "livello": "A",
+            "motivo": "file trovati nella cartella base (8/10)",
+            "esempi": [
+              "SS_0001",
+              "SS_0002"
+            ]
+          },
+          {
+            "campo": "link_foto",
+            "tipo": "stringa",
+            "n_valori": 12,
+            "n_non_null": 12,
+            "n_esistenti": 0,
+            "nome_match": true,
+            "ext_rate": 1.0,
+            "path_rate": 0.0,
+            "esiste_rate": 0.0,
+            "multi_rate": 0.0,
+            "guid_rate": 0.0,
+            "num_rate": 0.0,
+            "remoto_rate": 1.0,
+            "livello": "D",
+            "motivo": "URL remoti o percorso non locale",
+            "esempi": [
+              "https://esempio.it/foto/EST_0001.jpg",
+              "https://esempio.it/foto/EST_0002.jpg"
+            ]
+          },
+          {
+            "campo": "data_foto",
+            "tipo": "data",
+            "n_valori": 12,
+            "n_non_null": 12,
+            "n_esistenti": 0,
+            "nome_match": true,
+            "ext_rate": 0.0,
+            "path_rate": 0.0,
+            "esiste_rate": 0.0,
+            "multi_rate": 0.0,
+            "guid_rate": 0.0,
+            "num_rate": 0.0,
+            "remoto_rate": 0.0,
+            "livello": "D",
+            "motivo": "tipo non testuale (data)",
+            "esempi": [
+              "PyQt5.QtCore.QDate(2026, 4, 1)",
+              "PyQt5.QtCore.QDate(2026, 4, 2)"
+            ]
+          },
+          {
+            "campo": "fid",
+            "tipo": "numerico",
+            "n_valori": 12,
+            "n_non_null": 12,
+            "n_esistenti": 0,
+            "nome_match": false,
+            "ext_rate": 0.0,
+            "path_rate": 0.0,
+            "esiste_rate": 0.0,
+            "multi_rate": 0.0,
+            "guid_rate": 0.0,
+            "num_rate": 1.0,
+            "remoto_rate": 0.0,
+            "livello": "D",
+            "motivo": "tipo non testuale (numerico)",
+            "esempi": [
+              "1",
+              "2"
+            ]
+          },
+          {
+            "campo": "foto_archiviata",
+            "tipo": "stringa",
+            "n_valori": 12,
+            "n_non_null": 0,
+            "n_esistenti": 0,
+            "nome_match": true,
+            "ext_rate": 0.0,
+            "path_rate": 0.0,
+            "esiste_rate": 0.0,
+            "multi_rate": 0.0,
+            "guid_rate": 0.0,
+            "num_rate": 0.0,
+            "remoto_rate": 0.0,
+            "livello": "D",
+            "motivo": "nessun valore non nullo",
+            "esempi": []
+          },
+          {
+            "campo": "GLOBALID",
+            "tipo": "stringa",
+            "n_valori": 12,
+            "n_non_null": 12,
+            "n_esistenti": 0,
+            "nome_match": false,
+            "ext_rate": 0.0,
+            "path_rate": 0.0,
+            "esiste_rate": 0.0,
+            "multi_rate": 0.0,
+            "guid_rate": 1.0,
+            "num_rate": 0.0,
+            "remoto_rate": 0.0,
+            "livello": "D",
+            "motivo": "valori GUID (probabile GlobalID, da escludere)",
+            "esempi": [
+              "{A1B2C3D4-E5F6-47A8-B9C0-D1E2F3A4B521}",
+              "{A1B2C3D4-E5F6-47A8-B9C0-D1E2F3A4B522}"
+            ]
+          },
+          {
+            "campo": "id_foto",
+            "tipo": "stringa",
+            "n_valori": 12,
+            "n_non_null": 12,
+            "n_esistenti": 0,
+            "nome_match": true,
+            "ext_rate": 0.0,
+            "path_rate": 0.0,
+            "esiste_rate": 0.0,
+            "multi_rate": 0.0,
+            "guid_rate": 0.0,
+            "num_rate": 1.0,
+            "remoto_rate": 0.0,
+            "livello": "D",
+            "motivo": "valori numerici",
+            "esempi": [
+              "1",
+              "2"
+            ]
+          }
+        ],
+        "verifica": {
+          "attesi": [
+            "FOTO_EST",
+            "FOTO_INT",
+            "foto_impianto"
+          ],
+          "strict": [
+            "FOTO_EST",
+            "FOTO_INT",
+            "foto_impianto"
+          ],
+          "soft": [],
+          "tp_strict": [
+            "FOTO_EST",
+            "FOTO_INT",
+            "foto_impianto"
+          ],
+          "fn": [],
+          "fn_soft": [],
+          "fp_strict": [],
+          "c_attese": [],
+          "c_extra": [],
+          "c_neutre": []
+        }
+      },
+      "Ril_ApFp_docs": {
+        "righe": [
+          {
+            "campo": "doc_allegato",
+            "tipo": "stringa",
+            "n_valori": 12,
+            "n_non_null": 10,
+            "n_esistenti": 8,
+            "nome_match": true,
+            "ext_rate": 1.0,
+            "path_rate": 1.0,
+            "esiste_rate": 0.8,
+            "multi_rate": 0.0,
+            "guid_rate": 0.0,
+            "num_rate": 0.0,
+            "remoto_rate": 0.0,
+            "livello": "A",
+            "motivo": "file trovati nella cartella base (8/10)",
+            "esempi": [
+              "docs/planimetria_01.pdf",
+              "docs/planimetria_02.pdf"
+            ]
+          },
+          {
+            "campo": "foto_multiple",
+            "tipo": "stringa",
+            "n_valori": 12,
+            "n_non_null": 10,
+            "n_esistenti": 8,
+            "nome_match": true,
+            "ext_rate": 1.0,
+            "path_rate": 1.0,
+            "esiste_rate": 0.8,
+            "multi_rate": 0.6,
+            "guid_rate": 0.0,
+            "num_rate": 0.0,
+            "remoto_rate": 0.0,
+            "livello": "A",
+            "motivo": "file trovati nella cartella base (8/10); 60% valori multipli",
+            "esempi": [
+              "superficie/EST_0001.jpg;superficie/INT_0001.jpg",
+              "superficie/EST_0001.jpg;superficie/INT_0001.jpg"
+            ]
+          },
+          {
+            "campo": "riferimento_relazione",
+            "tipo": "stringa",
+            "n_valori": 12,
+            "n_non_null": 10,
+            "n_esistenti": 8,
+            "nome_match": false,
+            "ext_rate": 1.0,
+            "path_rate": 1.0,
+            "esiste_rate": 0.8,
+            "multi_rate": 0.0,
+            "guid_rate": 0.0,
+            "num_rate": 0.0,
+            "remoto_rate": 0.0,
+            "livello": "A",
+            "motivo": "file trovati nella cartella base (8/10)",
+            "esempi": [
+              "docs/planimetria_01.pdf",
+              "docs/planimetria_02.pdf"
+            ]
+          },
+          {
+            "campo": "note_doc",
+            "tipo": "stringa",
+            "n_valori": 12,
+            "n_non_null": 12,
+            "n_esistenti": 0,
+            "nome_match": true,
+            "ext_rate": 0.0,
+            "path_rate": 0.0,
+            "esiste_rate": 0.0,
+            "multi_rate": 0.0,
+            "guid_rate": 0.0,
+            "num_rate": 0.0,
+            "remoto_rate": 0.0,
+            "livello": "C",
+            "motivo": "solo il nome suggerisce un campo foto",
+            "esempi": [
+              "archiviato",
+              "archiviato"
+            ]
+          },
+          {
+            "campo": "data_doc",
+            "tipo": "data",
+            "n_valori": 12,
+            "n_non_null": 12,
+            "n_esistenti": 0,
+            "nome_match": true,
+            "ext_rate": 0.0,
+            "path_rate": 0.0,
+            "esiste_rate": 0.0,
+            "multi_rate": 0.0,
+            "guid_rate": 0.0,
+            "num_rate": 0.0,
+            "remoto_rate": 0.0,
+            "livello": "D",
+            "motivo": "tipo non testuale (data)",
+            "esempi": [
+              "PyQt5.QtCore.QDate(2026, 5, 1)",
+              "PyQt5.QtCore.QDate(2026, 5, 2)"
+            ]
+          },
+          {
+            "campo": "descrizione",
+            "tipo": "stringa",
+            "n_valori": 12,
+            "n_non_null": 12,
+            "n_esistenti": 0,
+            "nome_match": false,
+            "ext_rate": 0.0,
+            "path_rate": 0.0,
+            "esiste_rate": 0.0,
+            "multi_rate": 0.0,
+            "guid_rate": 0.0,
+            "num_rate": 0.0,
+            "remoto_rate": 0.0,
+            "livello": "D",
+            "motivo": "nessun segnale di nome o di valore",
+            "esempi": [
+              "impianto conforme",
+              "impianto conforme"
+            ]
+          },
+          {
+            "campo": "fid",
+            "tipo": "numerico",
+            "n_valori": 12,
+            "n_non_null": 12,
+            "n_esistenti": 0,
+            "nome_match": false,
+            "ext_rate": 0.0,
+            "path_rate": 0.0,
+            "esiste_rate": 0.0,
+            "multi_rate": 0.0,
+            "guid_rate": 0.0,
+            "num_rate": 1.0,
+            "remoto_rate": 0.0,
+            "livello": "D",
+            "motivo": "tipo non testuale (numerico)",
+            "esempi": [
+              "1",
+              "2"
+            ]
+          },
+          {
+            "campo": "GLOBALID",
+            "tipo": "stringa",
+            "n_valori": 12,
+            "n_non_null": 12,
+            "n_esistenti": 0,
+            "nome_match": false,
+            "ext_rate": 0.0,
+            "path_rate": 0.0,
+            "esiste_rate": 0.0,
+            "multi_rate": 0.0,
+            "guid_rate": 1.0,
+            "num_rate": 0.0,
+            "remoto_rate": 0.0,
+            "livello": "D",
+            "motivo": "valori GUID (probabile GlobalID, da escludere)",
+            "esempi": [
+              "{A1B2C3D4-E5F6-47A8-B9C0-D1E2F3A4B541}",
+              "{A1B2C3D4-E5F6-47A8-B9C0-D1E2F3A4B542}"
+            ]
+          }
+        ],
+        "verifica": {
+          "attesi": [
+            "doc_allegato",
+            "foto_multiple",
+            "riferimento_relazione"
+          ],
+          "strict": [
+            "doc_allegato",
+            "foto_multiple",
+            "riferimento_relazione"
+          ],
+          "soft": [
+            "note_doc"
+          ],
+          "tp_strict": [
+            "doc_allegato",
+            "foto_multiple",
+            "riferimento_relazione"
+          ],
+          "fn": [],
+          "fn_soft": [],
+          "fp_strict": [],
+          "c_attese": [],
+          "c_extra": [
+            "note_doc"
+          ],
+          "c_neutre": []
+        }
+      }
+    }
+  }
+}
