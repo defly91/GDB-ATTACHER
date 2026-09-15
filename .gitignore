@@ -18,6 +18,8 @@ __pycache__/
 *.jpeg
 *.png
 *.pdf
+# ...ma le risorse del plugin si versionano: l'icona serve nel pacchetto QGIS.
+!gdb_attacher/resources/icone/*.png
 
 # OS
 .DS_Store

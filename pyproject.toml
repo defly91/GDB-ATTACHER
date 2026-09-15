@@ -30,7 +30,9 @@ license = { text = "GPL-2.0-or-later" }
 packages = []
 
 [tool.pytest.ini_options]
-testpaths = ["tests"]
+# Due suite: `tests/` (fake QGIS condiviso, contratto v1, packaging, CI) e
+# `gdb_attacher/tests/` (test del pacchetto, autocontenuti con i propri finti).
+testpaths = ["tests", "gdb_attacher/tests"]
 addopts = "-q --strict-markers"
 markers = [
     "unit: test di logica pura che girano con il finto QGIS (nessun GDAL).",

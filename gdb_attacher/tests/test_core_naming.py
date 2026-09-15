@@ -202,8 +202,17 @@ def test_formula_vuota_finisce_nel_report():
     assert candidati[0].motivo == "formula vuota"
 
 
-def test_valutatore_qgis_non_esiste_fuori_da_qgis():
-    """``verifica_formula`` non deve esplodere: fuori da QGIS ritorna un avviso."""
+def test_valutatore_qgis_non_esiste_fuori_da_qgis(monkeypatch):
+    """``verifica_formula`` non deve esplodere: fuori da QGIS ritorna un avviso.
+
+    La suite condivisa (`tests/conftest.py`) inietta un finto ``qgis`` in
+    ``sys.modules`` per tutti i test: qui quella iniezione viene tolta per la durata
+    del test, così si esercita davvero il percorso "QGIS non presente" (import che
+    fallisce → avviso, nessun errore bloccante).
+    """
+    for nome in [n for n in list(sys.modules) if n == "qgis" or n.startswith("qgis.")]:
+        monkeypatch.delitem(sys.modules, nome, raising=False)
+
     errore, avviso = naming.verifica_formula('@stem || "CODICE"', None)
     assert errore == ""
     assert "non disponibile" in avviso

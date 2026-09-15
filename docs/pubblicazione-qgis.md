@@ -32,7 +32,8 @@ Da controllare in `gdb_attacher/metadata.txt` prima dell'upload:
 | `category` | una tra quelle ammesse (per questo plugin: *Vector* o *Database*) |
 | `experimental` | `False` solo quando è pronto per tutti; `True` finché è in rodaggio |
 | `icon` | PNG nell'ambito `resources/` (lo zip deve contenerlo) |
-| `license` | `GPL-2.0-or-later` (file `LICENSE` presente in repo) |
+| `license` | `GPL-2.0-or-later` (SPDX) e file `LICENSE` in repo, **senza estensione** |
+| `email` | contatto valido: oggi `defly91@users.noreply.github.com` — **da confermare** o sostituire con l'indirizzo preferito prima dell'upload |
 
 ## 3. Contenuto dello zip
 
