@@ -395,10 +395,31 @@ def test_i_candidati_non_scrivibili_non_vengono_contati_due_volte(cartella_foto)
     assert finale.saltati == 0
 
 
+def distingue_il_caso(cartella):
+    """Prova sul filesystem vero, non un'euristica sul sistema operativo.
+
+    `os.path.normcase` non basta: normalizza il caso solo su Windows, mentre macOS è
+    case-insensitive pur restando POSIX. La sonda crea una cartella e verifica se la
+    stessa esiste anche scritta in maiuscolo, poi ripulisce.
+    """
+    sonda = cartella / "sonda"
+    sonda.mkdir()
+    try:
+        return not (cartella / "SONDA").exists()
+    finally:
+        shutil.rmtree(sonda, ignore_errors=True)
+
+
 def test_la_cache_dell_indice_distingue_cartelle_con_case_diverso(tmp_path):
     """Difetto: la chiave della cache era abbassata di caso, quindi su filesystem
     case-sensitive `/X/Foto` e `/x/foto` condividevano l'indice sbagliato."""
     from gdb_attacher.core import discovery
+
+    # Il salto va *prima* di toccare il filesystem: su NTFS/APFS "Foto" e "foto" sono
+    # la stessa cartella, quindi la seconda mkdir sollevava FileExistsError invece di
+    # arrivare al ramo di salto previsto.
+    if not distingue_il_caso(tmp_path):
+        pytest.skip("filesystem case-insensitive: le due cartelle sono la stessa")
 
     maiuscola = tmp_path / "Foto"
     minuscola = tmp_path / "foto"
@@ -411,8 +432,6 @@ def test_la_cache_dell_indice_distingue_cartelle_con_case_diverso(tmp_path):
     indice_maiuscola = discovery.IndiceFile.per_cartella(str(maiuscola))
     indice_minuscola = discovery.IndiceFile.per_cartella(str(minuscola))
 
-    if os.path.normcase("A") == os.path.normcase("a"):
-        pytest.skip("filesystem case-insensitive: le due cartelle sono la stessa")
     assert indice_maiuscola is not indice_minuscola
     assert indice_maiuscola.risolvi("A.jpg").endswith("A.jpg")
     assert indice_minuscola.risolvi("B.jpg").endswith("B.jpg")
