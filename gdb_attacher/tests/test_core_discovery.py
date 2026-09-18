@@ -178,6 +178,39 @@ def test_token_con_spazi_vale_solo_se_il_file_esiste(cartella):
         os.remove(percorso)
 
 
+def test_percorso_assoluto_con_spazi_vale_anche_senza_cartella_base(tmp_path):
+    """Difetto trovato sul campo: un campo con un percorso assoluto **con spazi** spariva.
+
+    Il valore reale era ``Creator = C:\\Users\\...\\WhatsApp Image 2026-09-15 at 13.06.13.jpeg``.
+    Senza cartella base l'indice era ``None``, il token con spazi veniva scartato e il campo
+    finiva in **D** (livello nascosto: nessun modo di sapere perché, né di sceglierlo a
+    mano). Con la cartella base invece era livello A: discovery e scrittura vedevano cose
+    diverse sugli stessi valori.
+    """
+    foto = tmp_path / "WhatsApp Image 2026-09-15 at 13.06.13.jpeg"
+    foto.write_bytes(b"x")
+    layer = _layer({"Creator": [str(foto), str(foto)]})
+
+    riga = _punteggio(discovery.suggerisci_campi(layer, None, tipo_fn=_tipo), "Creator")
+    assert riga.livello == "A"
+    assert riga.n_esistenti == 2
+    assert riga.ext_rate == 1.0 and riga.esiste_rate == 1.0
+
+    # Con una cartella base qualsiasi il verdetto non cambia: il percorso è già completo.
+    con_base = _punteggio(discovery.suggerisci_campi(layer, str(tmp_path), tipo_fn=_tipo),
+                          "Creator")
+    assert (con_base.livello, con_base.n_esistenti) == ("A", 2)
+
+
+def test_percorso_assoluto_inesistente_con_spazi_resta_escluso(tmp_path):
+    """La protezione dalla prosa resta: un percorso che non esiste non è un campo foto."""
+    layer = _layer({"Creator": [r"C:\Foto\la mia foto.jpg", r"C:\Foto\la mia foto.jpg"]})
+
+    riga = _punteggio(discovery.suggerisci_campi(layer, None, tipo_fn=_tipo), "Creator")
+    assert riga.livello == "D"
+    assert riga.n_esistenti == 0
+
+
 def test_sottocartelle_e_percorsi_relativi(cartella):
     layer = _layer({"foto_contatore": ["contatore/ACQ_1.jpg", "ACQ_1.jpg"]})
     riga = _punteggio(discovery.suggerisci_campi(layer, cartella, tipo_fn=_tipo), "foto_contatore")

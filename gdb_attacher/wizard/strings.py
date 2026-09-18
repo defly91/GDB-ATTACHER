@@ -128,10 +128,13 @@ STRINGHE = {
         "come_abilitare": "come abilitare gli allegati",
         # --- pagina discovery
         "testo_discovery": "Il plugin legge un campione di valori per ogni campo e propone i campi che "
-                           "contengono nomi o percorsi di file. La cartella base è il segnale più forte: "
-                           "con la cartella base i nomi senza estensione diventano livello A.",
-        "label_cartella_base": "Cartella base dei file:",
-        "cartella_base_vuota": "(nessuna cartella base: discovery solo sintattica, niente livello A)",
+                           "contengono nomi o percorsi di file. La cartella base è facoltativa: serve solo "
+                           "quando il valore è un nome relativo («SS_0001», «foto/ACQ_1.jpg») da cercare "
+                           "dentro quella cartella. Se il valore è già il percorso completo del file "
+                           "(«C:\\Foto\\SS_0001.jpg») si risolve lo stesso: puoi lasciarla vuota.",
+        "label_cartella_base": "Cartella base dei file (facoltativa):",
+        "cartella_base_vuota": "Nessuna cartella base: i percorsi completi si risolvono lo stesso, "
+                               "i nomi relativi («SS_0001») no.",
         "scansiona": "Analizza i campi",
         "scansione_in_corso": "Analisi dei campi in corso…",
         "col_livello": "Liv.",
@@ -143,7 +146,7 @@ STRINGHE = {
         "col_nome": "Nome",
         "col_motivo": "Motivo",
         "col_esempi": "Esempi",
-        "livello_a": "A — file trovati nella cartella base",
+        "livello_a": "A — file trovati su disco",
         "livello_b": "B — estensione di file, non verificati su disco",
         "livello_c": "C — solo il nome suggerisce (da rivedere a mano)",
         "livello_d": "D — nessun segnale (nascosto)",
@@ -151,6 +154,8 @@ STRINGHE = {
         "avviso_livello_b": "Livello B: i valori hanno un'estensione di file ma non sono stati trovati "
                             "sulla cartella base. Controlla la cartella prima di eseguire.",
         "nessun_campo_trovato": "Nessun campo candidato: scegli a mano i campi al passo successivo.",
+        "nessun_campo_candidato": "Nessun campo candidato in A, B o C: al passo successivo trovi tutti "
+                                  "i campi del layer e puoi scegliere a mano quello giusto.",
         "cartella_base_non_valida": "La cartella «{cartella}» non esiste o non è leggibile.",
         "errore_scansione": "Errore imprevisto durante l'analisi dei campi: {errore}",
         # --- pagina campi
@@ -159,11 +164,12 @@ STRINGHE = {
         "col_scelto": "Usa",
         "preselezionati": "Preselezionati dalla discovery",
         "da_rivedere": "Da rivedere (livello C)",
-        "altri_campi": "Altri campi (livello D, di solito non sensati)",
+        "altri_campi": "Mostra anche gli altri campi (livello D)",
+        "nessun_campo_visibile": "Nessun campo candidato: qui sotto ci sono tutti i campi del layer. "
+                                 "Spunta quello che contiene il file da allegare.",
         "nessun_campo_scelto": "Spunta almeno un campo foto per proseguire.",
         "riepilogo_campi": "Campi scelti: {n} — cartella base: {cartella}",
-        "nota_cartella_prima": "La cartella base è stata chiesta al passo precedente proprio perché "
-                               "serve alla discovery: cambiarla qui non rifà l'analisi.",
+        "nota_cartella_prima": "La cartella base serve alla discovery: cambiarla qui non rifà l'analisi.",
         # --- pagina naming
         "titolo_naming": "Nome allegato",
         "testo_naming": "Il file da allegare è sempre risolto dal campo foto + cartella base. "
@@ -366,10 +372,12 @@ STRINGHE = {
         "come_abilitare": "how to enable attachments",
         # --- discovery page
         "testo_discovery": "The plugin samples each field's values and suggests the fields that contain file "
-                           "names or paths. The base folder is the strongest signal: with it, names without "
-                           "extension become level A.",
-        "label_cartella_base": "Base folder of the files:",
-        "cartella_base_vuota": "(no base folder: syntax-only discovery, no level A)",
+                           "names or paths. The base folder is optional: it is only needed when the value "
+                           "is a relative name («SS_0001», «foto/ACQ_1.jpg») to look up inside that folder. "
+                           "If the value already is the file's full path («C:\\Foto\\SS_0001.jpg») it "
+                           "resolves anyway: you can leave it empty.",
+        "label_cartella_base": "Base folder of the files (optional):",
+        "cartella_base_vuota": "No base folder: full paths still resolve, relative names «SS_0001» do not.",
         "scansiona": "Scan the fields",
         "scansione_in_corso": "Scanning the fields…",
         "col_livello": "Lvl",
@@ -381,7 +389,7 @@ STRINGHE = {
         "col_nome": "Name",
         "col_motivo": "Reason",
         "col_esempi": "Examples",
-        "livello_a": "A — files found in the base folder",
+        "livello_a": "A — files found on disk",
         "livello_b": "B — file extension, not verified on disk",
         "livello_c": "C — only the name suggests it (review by hand)",
         "livello_d": "D — no signal (hidden)",
@@ -389,6 +397,8 @@ STRINGHE = {
         "avviso_livello_b": "Level B: values carry a file extension but were not found in the base folder. "
                             "Check the folder before running.",
         "nessun_campo_trovato": "No candidate field: choose the fields by hand in the next step.",
+        "nessun_campo_candidato": "No candidate field in A, B or C: the next step lists every field of "
+                                  "the layer, so you can pick the right one by hand.",
         "cartella_base_non_valida": "Folder “{cartella}” does not exist or is not readable.",
         "errore_scansione": "Unexpected error while scanning the fields: {errore}",
         # --- field selection page
@@ -397,11 +407,12 @@ STRINGHE = {
         "col_scelto": "Use",
         "preselezionati": "Pre-checked by discovery",
         "da_rivedere": "To review (level C)",
-        "altri_campi": "Other fields (level D, usually meaningless)",
+        "altri_campi": "Show the other fields too (level D)",
+        "nessun_campo_visibile": "No candidate field: every field of the layer is listed below. "
+                                 "Tick the one that holds the file to attach.",
         "nessun_campo_scelto": "Tick at least one photo field to continue.",
         "riepilogo_campi": "Chosen fields: {n} — base folder: {cartella}",
-        "nota_cartella_prima": "The base folder was asked in the previous step precisely because discovery "
-                               "needs it: changing it here does not re-run the scan.",
+        "nota_cartella_prima": "The base folder feeds the discovery: changing it here does not re-run the scan.",
         # --- naming page
         "titolo_naming": "Attachment name",
         "testo_naming": "The file to attach is always resolved from the photo field + base folder. "

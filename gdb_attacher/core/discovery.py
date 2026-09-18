@@ -5,7 +5,7 @@ Euristica a **4 segnali sui valori + 1 sul nome del campo** (misurata 7/7 campi 
 veri preselezionati e 0 falsi positivi con la cartella base, 6/7 senza):
 
 - ``ext%``    quota di valori non nulli che finiscono con un'estensione allegabile;
-- ``esiste%`` quota risolta a un file reale sotto la cartella base;
+- ``esiste%`` quota risolta a un file reale (percorso assoluto, o dentro la cartella base);
 - ``multi%``  quota con più file nello stesso valore (``a.jpg;b.jpg``);
 - ``guid%`` / ``num%`` / ``remoto%`` — segnali di **scarto** (GlobalID, numeri, URL);
 - ``nome``    il nome del campo contiene una parola chiave (``foto``, ``file``,
@@ -21,7 +21,13 @@ Verdetti del prototipo recepiti qui:
 2. i valori nulli arrivano da QGIS come sentinella ``NULL``, non ``None``;
 3. un token con spazi vale come nome file solo se il file esiste davvero
    (altrimenti è prosa che cita un ``.jpg``);
-4. il campo pseudo-``fid`` che alcuni provider espongono è rumore: escluso.
+4. il campo pseudo-``fid`` che alcuni provider espongono è rumore: escluso;
+5. la cartella base serve ai **nomi relativi**, non ai percorsi assoluti: un valore come
+   ``C:\\Foto\\WhatsApp Image 3.jpeg`` si risolve lo stesso, e senza cartella base. La
+   risoluzione passa da ``risolutore_file`` — lo stesso di ``naming`` — perché discovery
+   e scrittura devono vedere gli stessi file (difetto trovato sul campo: con l'indice
+   della cartella base a ``None`` ogni valore con spazi veniva scartato e il campo
+   finiva in D, cioè nascosto, senza modo di sapere perché).
 
 Il modulo è importabile senza QGIS: ``qgis.*`` compare solo dentro ``_e_null()`` e
 dentro il rilevatore di tipo predefinito, entrambi in ``try/except``.
@@ -156,14 +162,18 @@ def _ha_estensione(token: str, estensioni) -> bool:
     return estensione in estensioni
 
 
-def _candidato_file(token: str, indice, estensioni) -> bool:
+def _candidato_file(token: str, risolvi) -> bool:
     """Un token con spazi è un nome file solo se il file esiste davvero.
 
     Altrimenti è prosa che cita un'estensione («manca la foto X.jpg»).
+
+    La verifica usa il **risolutore** (``risolutore_file``), non l'indice della cartella
+    base: un percorso assoluto si risolve anche senza cartella base, mentre con l'indice
+    a ``None`` finiva scartato — e un campo foto non riconosciuto non si vede nemmeno.
     """
     if not re.search(r"\s", token):
         return True
-    return bool(indice and indice.risolvi(token, estensioni))
+    return bool(risolvi(token))
 
 
 class IndiceFile:
@@ -337,12 +347,11 @@ def punteggio_campo(nome, tipo, valori, cartella_base=None, estensioni=None,
     n_esistenti = 0
     esempi = []
 
-    indice = IndiceFile.per_cartella(cartella_base, estensioni) if (
-        cartella_base and os.path.isdir(cartella_base)) else None
+    risolvi = risolutore_file(cartella_base, estensioni)
 
     for valore in non_nulli:
         token = _tokenizza(valore)
-        token_file = [t for t in token if _candidato_file(t, indice, estensioni)]
+        token_file = [t for t in token if _candidato_file(t, risolvi)]
         if len(esempi) < 2:
             esempi.append(str(valore).strip())
         if len(token) == 1 and GUID_RE.match(token[0]):
@@ -355,7 +364,7 @@ def punteggio_campo(nome, tipo, valori, cartella_base=None, estensioni=None,
             ext += 1
         if any(("/" in t or "\\" in t) and not _sembra_url(t) for t in token_file):
             percorso += 1
-        esistenti_token = sum(1 for t in token_file if indice and indice.risolvi(t, estensioni))
+        esistenti_token = sum(1 for t in token_file if risolvi(t))
         if esistenti_token:
             esiste += 1
             n_esistenti += 1
@@ -382,7 +391,7 @@ def punteggio_campo(nome, tipo, valori, cartella_base=None, estensioni=None,
     elif rate(remoto) >= SOGLIA:
         livello, motivo = "D", "URL remoti o percorso non locale"
     elif esiste_rate >= SOGLIA and (n_esistenti >= 2 or n_non_null <= 2):
-        livello, motivo = "A", f"file trovati nella cartella base ({n_esistenti}/{n_non_null})"
+        livello, motivo = "A", f"file trovati su disco ({n_esistenti}/{n_non_null})"
     elif ext_rate >= SOGLIA and n_non_null >= 2:
         livello, motivo = "B", "valori con estensione di file, ma non verificati su disco"
     elif nome_match:
