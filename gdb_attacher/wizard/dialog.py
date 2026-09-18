@@ -410,12 +410,19 @@ class PaginaDiscovery(PaginaBase):
             for r in self.w.righe_discovery
         ]
         self._riempi(self.tabella, righe)
-        if not cartella:
-            self.stato.setText(self.t("cartella_base_vuota"))
-        elif not righe:
+        self.stato.setStyleSheet("")
+        candidati = [r for r in self.w.righe_discovery if r.livello != "D"]
+        if not righe:
             self.stato.setText(self.t("nessun_campo_trovato"))
+        elif not candidati:
+            # Tutti in D: la tabella qui li mostra, ma il passo successivo li nasconde.
+            # Va detto *adesso* che si potrà scegliere a mano, altrimenti si arriva a una
+            # pagina vuota senza capire come forzare il campo (segnalazione dall'uso reale).
+            self.stato.setText(self.t("nessun_campo_candidato"))
         elif any(r.livello == "B" for r in self.w.righe_discovery):
             self.stato.setText(self.t("avviso_livello_b"))
+        elif not cartella:
+            self.stato.setText(self.t("cartella_base_vuota"))
         else:
             self.stato.setText(self.t("legenda_livelli"))
         self.completeChanged.emit()
@@ -437,6 +444,9 @@ class PaginaCampi(PaginaBase):
         self.tabella.itemChanged.connect(lambda _i: self.completeChanged.emit())
         self.riepilogo = QLabel("")
         self.riepilogo.setWordWrap(True)
+        self.nota = QLabel("")
+        self.nota.setWordWrap(True)
+        self.nota.setVisible(False)
 
         disposizione = QVBoxLayout(self)
         testo = QLabel(self.t("testo_campi"))
@@ -447,10 +457,16 @@ class PaginaCampi(PaginaBase):
         nota.setStyleSheet("color:#555")
         disposizione.addWidget(nota)
         disposizione.addWidget(self.mostra_d)
+        disposizione.addWidget(self.nota)
         disposizione.addWidget(self.tabella, 1)
         disposizione.addWidget(self.riepilogo)
 
     def initializePage(self):  # noqa: N802
+        # Se nessun campo ha un segnale, senza questa spunta la tabella sarebbe vuota e il
+        # campo giusto non si potrebbe scegliere: mostro tutto, spiegando perché (la scelta
+        # resta dell'utente).
+        if not any(r.livello != "D" for r in self.w.righe_discovery):
+            self.mostra_d.setChecked(True)
         self._riempi_tabella()
 
     def _righe_visibili(self):
@@ -459,6 +475,8 @@ class PaginaCampi(PaginaBase):
 
     def _riempi_tabella(self):
         righe = self._righe_visibili()
+        self.nota.setText(self.t("nessun_campo_visibile") if not righe else "")
+        self.nota.setVisible(not righe)
         self.tabella.blockSignals(True)
         self.tabella.setRowCount(0)
         for numero, riga in enumerate(righe):
